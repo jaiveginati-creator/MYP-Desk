@@ -218,6 +218,7 @@
         }
         sidebar.classList.remove("open");
         search.value = "";
+        nav.querySelectorAll(".nav-link").forEach(button => { button.hidden = false; });
       }
       function openPanel(title) {
         document.getElementById("panelTitle").textContent = title;
