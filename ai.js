@@ -1,4 +1,4 @@
-/* PARLER FRANÇAIS — AI quiz adapter
+/* MYP DESK — AI quiz adapter
  *
  * This file is the frontend integration point only. Keep provider secrets on a
  * server you control; never place a private API key in this browser code.
@@ -12,7 +12,7 @@
     enabled: false // Set true only after the secure backend endpoint is deployed.
   });
 
-  async function generateQuiz({ notes, count = 10, style = "mixed" }) {
+  async function generateQuiz({ notes, count = 10, style = "mixed", subject = "General", language = "English" }) {
     if (!CONFIG.enabled) {
       throw new Error("AI quiz generation is not connected yet. Configure the secure backend first.");
     }
@@ -24,7 +24,8 @@
         notes: notes.map(({ title, body }) => ({ title, body })),
         count,
         style,
-        language: "French"
+        subject,
+        language
       })
     });
     if (!response.ok) {
