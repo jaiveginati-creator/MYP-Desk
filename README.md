@@ -1,34 +1,26 @@
 # MYP DESK
 
-A personal MYP 4–5 workspace with locally saved study notes, an AI notes assistant, and AI-generated practice quizzes.
+A personal MYP 4–5 workspace with locally saved study notes and browser-based study tools.
 
-## AI setup
+## Notes assistant and quiz builder
 
-The AI features use the OpenAI Responses API through a server-side Vercel Function. The browser never receives the API key.
+The study tools run entirely in the browser. They do not use an API, API key, serverless function, external AI provider, or network request.
 
-1. Import this repository into Vercel and deploy it. Vercel automatically exposes the function in `api/ai.js` at `/api/ai`.
-2. In the Vercel project settings, add the environment variable `OPENAI_API_KEY` with your OpenAI API key. Keep it private; never paste it into `ai.js`, `index.html`, or a public repository.
-3. Optionally set `OPENAI_MODEL` to a model available to your API account. The default is `gpt-4.1-mini`.
-4. Redeploy after adding or changing environment variables.
+Available tools:
+- Explain and reorganise selected notes in simpler sections
+- Summarise the main sentences in a note
+- Create revision flashcards from definition-style notes
+- Build a structured study guide and self-check prompts
+- Find the closest matching passages for a question
+- Generate multiple-choice, short-answer, or mixed quizzes with answers and explanations
 
-The static site can still be previewed without the AI environment variable. Notes remain stored in the current browser using local storage. AI requests will show a setup message until the server key is configured.
+## Important limitation
 
-## AI features
+The local study engine uses text processing, keyword matching, sentence ranking, and definition detection. It is not a large language model and does not have human-like reasoning or general knowledge. Its answers are limited to the material students enter, and the quality of generated questions depends on clear, complete notes. It will say when it cannot find enough information rather than pretending to know.
 
-- Explain selected notes in simpler language
-- Summarise notes
-- Generate revision flashcards
-- Build a structured study guide
-- Ask questions grounded in selected notes
-- Generate 5–20 mixed, multiple-choice, or short-answer quiz questions with answer explanations
+## Privacy
 
-The assistant is instructed to use the supplied notes as its factual source and to say when the notes do not contain enough information. Quiz output is validated before it is sent to the browser.
-
-## Privacy and operational notes
-
-- Saved notes stay in the browser's local storage unless the student chooses to send selected notes to the AI assistant or quiz generator.
-- When AI is used, the selected note text is sent to the configured server and then to the OpenAI API to produce the requested response.
-- The API key is read only from the server environment.
-- The API route applies request validation, same-origin checks, a per-instance rate limit, and disables response storage.
-- The in-memory rate limit is a basic safeguard, not a complete abuse-prevention system. Add deployment-level rate limiting before making a public production deployment.
-- Do not commit API keys or other secrets.
+- Notes are stored in the current browser using local storage.
+- The assistant and quiz builder process selected notes locally in the browser.
+- No note content is sent to a remote service.
+- No API key or account is required.

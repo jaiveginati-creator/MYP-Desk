@@ -1,24 +1,30 @@
-/* MYP DESK — secure AI study tools frontend adapter.
- * The API key stays on the server. This file contains no provider secrets.
+/* MYP DESK — private, browser-only study engine.
+ * No API, server, account, network request, or external model is used.
+ * This is a transparent rule-based helper, not a generative LLM.
  */
 (() => {
-  const ENDPOINT = "/api/ai";
-  async function request(payload) {
-    const response = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "The AI service could not complete your request.");
-    return data;
-  }
-  async function generateQuiz({ notes, count = 10, style = "mixed" }) {
-    return request({ action: "quiz", notes: notes.map(({ title, body }) => ({ title, body })), count, style });
-  }
-  async function askNotes({ notes, action = "explain", prompt = "" }) {
-    return request({ action: "notes", notes: notes.map(({ title, body }) => ({ title, body })), task: action, prompt });
-  }
-  window.ParlerAI = Object.freeze({ isConfigured: () => true, generateQuiz, askNotes });
+"use strict";
+const STOP=new Set(("about above after again against all also am an and any are as at be because been before being between both but by can could did do does doing down during each few for from further had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why will with would you your yours").split(" "));
+const clean=v=>String(v==null?"":v).replace(/\s+/g," ").trim();
+const words=t=>(clean(t).toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)||[]);
+function splitSentences(t){return String(t||"").replace(/\r/g,"").split(/(?<=[.!?])\s+|\n+/).map(clean).filter(s=>s.length>=24&&words(s).length>=5);}
+function scoreSentences(list){const freq=Object.create(null);list.forEach(s=>words(s).forEach(w=>{if(w.length>3&&!STOP.has(w))freq[w]=(freq[w]||0)+1;}));return list.map((sentence,index)=>{const terms=words(sentence).filter(w=>w.length>3&&!STOP.has(w));const score=terms.reduce((n,w)=>n+1+Math.log1p(freq[w]||0),0)/Math.max(1,Math.sqrt(terms.length));return{sentence,index,score};}).sort((a,b)=>b.score-a.score);}
+function collect(notes){if(!Array.isArray(notes)||!notes.length)throw new Error("Select at least one saved note first.");const source=notes.map(n=>({title:clean(n.title)||"Untitled note",body:clean(n.body)})).filter(n=>n.body);if(!source.length)throw new Error("Your selected notes are empty.");const sentences=source.flatMap(n=>splitSentences(n.body).map(sentence=>({sentence,title:n.title})));if(!sentences.length)throw new Error("Add a little more detail to your notes. The study tools need complete sentences to work well.");return{source,sentences};}
+function keyTerms(t,limit=12){const counts=new Map();words(t).forEach(w=>{if(w.length>3&&!STOP.has(w))counts.set(w,(counts.get(w)||0)+1);});return[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(x=>x[0]);}
+function definitionFacts(sentences){const facts=[],patterns=[/^(.{2,65}?)\s+(?:is|are|was|were|means|refers to|describes|is called)\s+(.{8,})$/i,/^(.{2,65}?)\s*[:–-]\s*(.{8,})$/i];sentences.forEach(item=>{const s=item.sentence.replace(/^[-•*]\s*/,"");for(const re of patterns){const m=s.match(re);if(m&&words(m[1]).length<=9&&words(m[1]).length>=1){facts.push({term:clean(m[1]),definition:clean(m[2]),source:s});break;}}});return facts;}
+function summaryText(sentences,limit=6){return scoreSentences(sentences.map(x=>x.sentence)).slice(0,Math.min(limit,sentences.length)).sort((a,b)=>a.index-b.index).map(x=>"• "+x.sentence).join("\n");}
+function explain({notes,action="explain",prompt=""}){const{sentences}=collect(notes),all=sentences.map(x=>x.sentence),facts=definitionFacts(sentences);
+if(action==="summarise")return"SUMMARY OF YOUR NOTES\n\n"+summaryText(sentences,8)+"\n\nThis summary is selected from the sentences in your notes.";
+if(action==="flashcards"){const cards=facts.slice(0,12);if(!cards.length)return"REVISION CARDS\n\n"+scoreSentences(all).slice(0,8).map((s,i)=>"CARD "+(i+1)+"\nQ: What is the main point of this note?\nA: "+s.sentence).join("\n\n");return"FLASHCARDS\n\n"+cards.map((f,i)=>"CARD "+(i+1)+"\nQ: What is "+f.term+"?\nA: "+f.definition).join("\n\n");}
+if(action==="study-guide"){const terms=keyTerms(all.join(" "),10);return"STUDY GUIDE\n\nKEY IDEAS\n"+summaryText(sentences,6)+"\n\nIMPORTANT TERMS\n"+(facts.length?facts.slice(0,10).map(f=>"• "+f.term+": "+f.definition).join("\n"):terms.map(t=>"• "+t).join("\n"))+"\n\nSELF-CHECK\n"+(facts.length?facts.slice(0,5).map(f=>"• Explain "+f.term+" in your own words.").join("\n"):"• Choose an important idea above and explain it using your notes.")+"\n\nUse the original notes to check your answers.";}
+if(action==="ask"){const query=words(prompt).filter(w=>w.length>2&&!STOP.has(w));const matches=sentences.map(x=>({sentence:x.sentence,score:query.reduce((n,w)=>n+(x.sentence.toLowerCase().includes(w)?1:0),0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);if(!matches.length)return"I couldn't find an answer to that in the selected notes. Try using a different keyword, or add the missing information to your notes.\n\nI won't guess beyond the material provided.";return"WHAT YOUR NOTES SAY\n\n"+matches.slice(0,5).map(x=>"• "+x.sentence).join("\n")+"\n\nThese are the closest matches I found in your notes. Read them together to form your answer.";}
+const ranked=scoreSentences(all),glossary=facts.slice(0,6).map(f=>"• "+f.term+" means "+f.definition);return"LET'S BREAK IT DOWN\n\n"+ranked.slice(0,6).sort((a,b)=>a.index-b.index).map(x=>"• "+x.sentence).join("\n")+"\n\n"+(glossary.length?"KEY TERMS\n"+glossary.join("\n")+"\n\n":"")+"Try explaining each point aloud, then check it against the original note. This helper reorganises your material; it does not add facts that aren't there.";}
+function makeQuestions(notes,count,style){const{sentences}=collect(notes),facts=definitionFacts(sentences),pool=sentences.map(x=>x.sentence),terms=keyTerms(pool.join(" "),40),questions=[],used=new Set();const add=q=>{const k=q.question.toLowerCase();if(!used.has(k)){used.add(k);questions.push(q);}};
+facts.forEach((fact,i)=>{if(questions.length>=count)return;const distractors=facts.filter((f,j)=>j!==i).map(f=>f.definition).filter(d=>d!==fact.definition),wantMC=style==="multiple"||(style==="mixed"&&questions.length%2===0);if(wantMC&&distractors.length>=3){const options=[fact.definition,...distractors.slice(0,3)].sort((a,b)=>a.localeCompare(b));add({question:"Which statement best describes "+fact.term+"?",options,correctIndex:options.indexOf(fact.definition),explanation:"Your notes define "+fact.term+" as: "+fact.definition,answer:fact.definition});}else add({question:"According to your notes, what is "+fact.term+"?",options:[],answer:fact.definition,explanation:"This definition comes directly from your notes: "+fact.source});});
+scoreSentences(pool).forEach(item=>{if(questions.length>=count)return;const available=words(item.sentence).filter(w=>w.length>=5&&!STOP.has(w)&&!/^\d+$/.test(w));if(!available.length)return;const answer=available.sort((a,b)=>b.length-a.length)[0],cloze=item.sentence.replace(answer,"________"),wantMC=style==="multiple"||(style==="mixed"&&questions.length%2===0);if(wantMC){const distractors=terms.filter(t=>t.toLowerCase()!==answer.toLowerCase()).slice(0,3);if(distractors.length<3)return;const options=[answer,...distractors].sort((a,b)=>a.localeCompare(b));add({question:"Complete the statement from your notes: "+cloze,options,correctIndex:options.indexOf(answer),answer,explanation:"The original sentence in your notes is: "+item.sentence});}else add({question:"Complete this statement from your notes: "+cloze,options:[],answer,explanation:"The original sentence in your notes is: "+item.sentence});});
+if(style==="multiple"){questions.forEach(q=>{if(!q.options.length){const d=terms.filter(t=>t.toLowerCase()!==String(q.answer).toLowerCase()).slice(0,3);if(d.length===3){q.options=[q.answer,...d].sort((a,b)=>a.localeCompare(b));q.correctIndex=q.options.indexOf(q.answer);}}});return questions.filter(q=>q.options.length===4).slice(0,count);}
+if(style==="short")return questions.map(q=>({question:q.question,options:[],answer:q.answer,explanation:q.explanation})).slice(0,count);return questions.slice(0,count);}
+async function generateQuiz({notes,count=10,style="mixed"}){const total=Math.max(1,Math.min(20,Number(count)||10)),questions=makeQuestions(notes,total,style);if(!questions.length)throw new Error("There aren't enough clear facts in these notes to build a quiz. Add complete sentences or definitions and try again.");return{questions};}
+async function askNotes({notes,action="explain",prompt=""}){return{text:explain({notes,action,prompt})};}
+window.ParlerAI=Object.freeze({isConfigured:()=>true,isLocal:true,generateQuiz,askNotes});
 })();
