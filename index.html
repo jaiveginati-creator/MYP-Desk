@@ -94,7 +94,7 @@
       .quick-card{min-height:110px}
       .intro{font-size:13px}
     }
-    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+    .reduce-motion *, .reduce-motion *:before, .reduce-motion *:after{scroll-behavior:auto!important;transition:none!important}
   </style>
 </head>
 <body>
@@ -247,7 +247,7 @@
         const button=event.currentTarget;
         const enabled=button.getAttribute("aria-checked")!=="true";
         button.setAttribute("aria-checked",String(enabled));
-        document.documentElement.style.setProperty("--motion-duration",enabled?"0s":".2s");
+        document.documentElement.classList.toggle("reduce-motion",enabled);
         showToast(enabled?"Animations réduites activées":"Animations réduites désactivées");
       });
       search.addEventListener("input",()=>{
