@@ -11,6 +11,39 @@ const tabs=[
 ];
 const themes=["Identities and relationships","Orientation in space and time","Personal and cultural expression","Scientific and technical innovation","Globalization and sustainability","Fairness and development"];
 let activeTab="type1",lastPaper=null;
+let timerInterval=null,timerRemaining=0,timerTotal=0,timerRunning=false;
+const recommendedMinutes={type1:70,type2:35,type3:15,full:120};
+function stopTimer(){if(timerInterval!==null){clearInterval(timerInterval);timerInterval=null}timerRunning=false}
+function resetTimer(){stopTimer();timerTotal=(recommendedMinutes[activeTab]||120)*60;timerRemaining=timerTotal;updateTimerUI()}
+function formatTime(seconds){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":")}
+function updateTimerUI(){
+ const clock=document.getElementById("eng-timer-clock"),bar=document.getElementById("eng-timer-progress"),state=document.getElementById("eng-timer-state"),toggle=document.getElementById("eng-timer-toggle"),wrap=document.getElementById("eng-timer");
+ if(!clock||!bar||!state||!toggle||!wrap)return;
+ clock.textContent=formatTime(timerRemaining);
+ bar.style.width=(timerTotal?Math.max(0,timerRemaining/timerTotal*100):0)+"%";
+ wrap.classList.toggle("warning",timerRemaining<=300&&timerRemaining>0);
+ wrap.classList.toggle("expired",timerRemaining===0);
+ toggle.textContent=timerRunning?"Pause timer":"Start timer";
+ state.textContent=timerRemaining===0?"Time is up — review your response.":timerRunning?"Timer running":"Timer paused";
+}
+function toggleTimer(){
+ if(timerRunning){stopTimer();updateTimerUI();return}
+ if(timerRemaining<=0)resetTimer();
+ timerRunning=true;
+ timerInterval=setInterval(()=>{
+  timerRemaining=Math.max(0,timerRemaining-1);
+  if(timerRemaining===0)stopTimer();
+  updateTimerUI();
+ },1000);
+ updateTimerUI();
+}
+function timerMarkup(){
+ let split="Task 1: 35 min short responses + 35 min comparison · Task 2: 35 min literary writing · Task 3: 15 min non-literary writing.";
+ if(activeTab==="type1")split="Suggested split: 35 min for the four short responses, then 35 min for the extended comparison.";
+ if(activeTab==="type2")split="Suggested time: 35 min for planning, writing and checking your literary text.";
+ if(activeTab==="type3")split="Suggested time: 15 min for planning, writing and checking your non-literary text.";
+ return '<div class="eng-timer" id="eng-timer"><div class="eng-timer-top"><div><span class="eng-timer-label">IB-STYLE SUGGESTED TIMING</span><div class="eng-timer-clock" id="eng-timer-clock">00:00:00</div><span class="eng-timer-state" id="eng-timer-state">Timer paused</span></div><div class="eng-timer-actions"><button type="button" class="btn" id="eng-timer-toggle">Start timer</button><button type="button" class="btn secondary" id="eng-timer-reset">Reset</button></div></div><div class="eng-timer-track"><span id="eng-timer-progress"></span></div><p>'+split+'</p><small>Approximate practice guidance, not a compulsory IB rule. The full paper remains 120 minutes.</small></div>';
+}
 function markup(){
  return `<div class="english-assessment">
  <div class="eyebrow">MYP 4 & MYP 5 · LANGUAGE & LITERATURE</div>
@@ -28,7 +61,7 @@ function markup(){
  </div>`;
 }
 function setTab(id){
- if(!tabs.some(t=>t.id===id))return;activeTab=id;
+ if(!tabs.some(t=>t.id===id))return;stopTimer();activeTab=id;
  const title=document.getElementById("eng-panel-title"),sub=document.getElementById("eng-panel-sub"),btn=document.getElementById("eng-generate");
  const t=tabs.find(x=>x.id===id);
  document.querySelectorAll("[data-eng-tab]").forEach(b=>{const on=b.dataset.engTab===id;b.classList.toggle("active",on);b.setAttribute("aria-selected",String(on))});
@@ -38,6 +71,7 @@ function setTab(id){
  const status=document.getElementById("eng-status");if(status)status.textContent="Fresh unseen texts and original prompts are generated each time.";
  const results=document.getElementById("eng-results");if(results)results.innerHTML='<div class="eng-empty"><strong>'+escapeHTML(t.title)+' practice.</strong>Generate a new set of original questions for this task.</div>';
  lastPaper=null;
+ resetTimer();
 }
 function renderSource(source){
  return '<div class="eng-source"><div class="eng-source-top"><strong>'+escapeHTML(source.title)+'</strong><span>'+escapeHTML(source.format)+'</span></div><p>'+escapeHTML(source.content)+'</p></div>';
@@ -50,8 +84,11 @@ function renderQuestion(q,taskIndex,questionIndex){
 function renderPaper(paper){
  if(!paper||!Array.isArray(paper.tasks)||!paper.tasks.length)throw new Error("The AI returned an incomplete assessment.");
  let html='<div class="eng-paper-head"><span>'+escapeHTML(paper.durationMinutes)+' MINUTES · '+escapeHTML(paper.totalMarks)+' MARKS</span><h2>'+escapeHTML(paper.title)+'</h2><p>Global context: '+escapeHTML(paper.theme)+'. Original practice material generated for this session. Complete the questions in order.</p></div>';
+ html+=timerMarkup();
  paper.tasks.forEach((task,ti)=>{
- html+='<section class="eng-task"><div class="eng-task-top"><span>TASK '+escapeHTML(task.taskNumber)+' · '+escapeHTML(task.type.toUpperCase())+'</span><strong>'+Number(task.marks||0)+' MARKS</strong></div><h3>'+escapeHTML(task.title)+'</h3><p class="eng-instructions">'+escapeHTML(task.instructions)+'</p>';
+ const typeKey=String(task.type||"").toLowerCase();
+ const taskMinutes=typeKey.includes("analys")?70:typeKey.includes("literary")?35:15;
+ html+='<section class="eng-task"><div class="eng-task-top"><span>TASK '+escapeHTML(task.taskNumber)+' · '+escapeHTML(task.type.toUpperCase())+'</span><strong>'+Number(task.marks||0)+' MARKS · ~'+taskMinutes+' MIN</strong></div><h3>'+escapeHTML(task.title)+'</h3><p class="eng-instructions">'+escapeHTML(task.instructions)+'</p>';
  (task.sources||[]).forEach(source=>{html+=renderSource(source)});
  (task.questions||[]).forEach((q,qi)=>{html+=renderQuestion(q,ti,qi)});
  html+='</section>';
@@ -67,7 +104,7 @@ async function generate(){
   const response=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment",taskType:activeTab,level,theme})});
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Assessment generation failed.");
   if(!data.paper)throw new Error("The AI did not return a complete paper.");
-  lastPaper=data.paper;results.innerHTML=renderPaper(data.paper);status.textContent="Your practice paper is ready. Work through the tasks and request feedback on each response.";
+  lastPaper=data.paper;resetTimer();results.innerHTML=renderPaper(data.paper);status.textContent="Your practice paper is ready. Work through the tasks and request feedback on each response.";
  }catch(error){results.innerHTML='<div class="eng-empty"><strong>Could not generate the paper.</strong>'+escapeHTML(error.message||"Please try again.")+'</div>';status.textContent="Generation failed."}
  finally{button.disabled=false;button.textContent="Generate "+(activeTab==="full"?"full assessment":"practice task")+" ↗"}
 }
@@ -86,9 +123,11 @@ async function mark(taskIndex,questionIndex,button){
  finally{button.disabled=false;button.textContent="Get AI feedback"}
 }
 function handleClick(event){
+ if(event.target.closest("#eng-timer-toggle")){toggleTimer();return}
+ if(event.target.closest("#eng-timer-reset")){resetTimer();return}
  const tab=event.target.closest("[data-eng-tab]");if(tab){setTab(tab.dataset.engTab);return}
  if(event.target.closest("#eng-generate")){generate();return}
  const markButton=event.target.closest("[data-eng-mark]");if(markButton){const parts=markButton.dataset.engMark.split("-").map(Number);mark(parts[0],parts[1],markButton)}
 }
-window.EnglishAssessment=Object.freeze({markup,handleClick});
+window.EnglishAssessment=Object.freeze({markup,handleClick,renderPaper});
 })();
