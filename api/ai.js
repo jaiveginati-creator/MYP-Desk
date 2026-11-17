@@ -232,7 +232,8 @@ Student response: ${response}
 Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short snippets if needed. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
     }
     responseFormat = action === "eassessment"
-      ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)\n      : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
+      ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)
+      : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
   if (action === "quiz") {
     const count = Math.max(1, Math.min(20, Number(body.count) || 10));
