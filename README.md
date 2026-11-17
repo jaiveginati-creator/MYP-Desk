@@ -2,35 +2,35 @@
 
 A personal MYP 4–5 workspace with locally saved study notes and browser-based study tools.
 
-## Notes assistant and quiz builder
+## AI assistant (Groq)
 
-The study tools run entirely in the browser. They do not use an API, API key, serverless function, external AI provider, or network request.
+The Notes Assistant and quiz builder use Groq through a server-side API route. The browser calls `/api/ai`; the Groq API key stays on the server and is never shipped to the client.
 
-Available tools:
-- Explain and reorganise selected notes in simpler sections
-- Summarise the main sentences in a note
-- Create revision flashcards from definition-style notes
-- Build a structured study guide and self-check prompts
-- Find the closest matching passages for a question
-- Generate multiple-choice, short-answer, or mixed quizzes with answers and explanations
+- Explain, summarise, create flashcards, and build study guides from selected notes.
+- Ask questions about notes, with the tutor distinguishing note-supported information from additional explanation.
+- Generate mixed, multiple-choice, and short-answer practice quizzes with answer explanations.
+- The tutor is general-purpose across MYP subjects, not limited to French.
+- If Groq is unavailable, the existing local rule-based study engine remains as a fallback and labels the response accordingly.
 
-## Run the study-engine tests
+### Deployment
 
-The study engine has a dependency-free Node.js test suite. From the repository root, run:
+This repository includes a Vercel serverless function in `api/ai.js` and a `vercel.json` configuration.
+
+1. Import this repository into Vercel and deploy it as a Vercel project. A static-only host such as GitHub Pages cannot run the server-side API route.
+2. In Vercel Project Settings → Environment Variables, add:
+   - `GROQ_API_KEY`: your Groq API key.
+   - `GROQ_MODEL` (optional): defaults to `openai/gpt-oss-20b`.
+3. Redeploy after adding the environment variables.
+4. Open the deployed site and test the Notes Assistant and quiz builder.
+
+Do not paste the API key into `index.html`, `ai.js`, `groq-client.js`, or commit it to GitHub. The `.env.example` file is only a variable-name template and contains no secret.
+
+## Local study-engine tests
+
+The original browser-only study engine remains in `ai.js`. Its dependency-free Node.js tests can be run with:
 
 ```bash
 node --test tests/ai.test.mjs
 ```
 
-The tests cover all assistant actions, note-grounded question matching, unknown questions, all quiz styles, answer-key consistency, and empty-input handling.
-
-## Important limitation
-
-The local study engine uses text processing, keyword matching, sentence ranking, and definition detection. It is not a large language model and does not have human-like reasoning or general knowledge. Its answers are limited to the material students enter, and the quality of generated questions depends on clear, complete notes. It will say when it cannot find enough information rather than pretending to know.
-
-## Privacy
-
-- Notes are stored in the current browser using local storage.
-- The assistant and quiz builder process selected notes locally in the browser.
-- No note content is sent to a remote service.
-- No API key or account is required.
+These tests cover local fallback actions, note-grounded question matching, unknown questions, quiz styles, answer-key consistency, and empty-input handling.
