@@ -31,7 +31,7 @@ async function withAI(run){
 }
 
 test("generates a validated Type 1 English analysis task",async()=>{
- const paper={title:"Belonging and the public space",theme:"Identities and relationships",taskType:"type1",durationMinutes:45,totalMarks:30,tasks:[task(1,"Analysing",30)]};
+ const paper={title:"Belonging and the public space",theme:"Identities and relationships",taskType:"type1",durationMinutes:70,totalMarks:30,tasks:[task(1,"Analysing",30)]};
  await withAI(async()=>{
   let prompt="";
   globalThis.fetch=mockFetch(paper,request=>{
@@ -45,6 +45,7 @@ test("generates a validated Type 1 English analysis task",async()=>{
   assert.equal(res.statusCode,200);
   assert.equal(res.payload.paper.tasks[0].questions.length,5);
   assert.equal(res.payload.paper.totalMarks,30);
+  assert.equal(res.payload.paper.durationMinutes,70);
   assert.match(prompt,/four shorter analysis questions/);
   assert.match(prompt,/NEVER copy or closely paraphrase/);
  });
