@@ -63,9 +63,18 @@ try {
   await page.getByRole("heading", { name: "French workspace." }).waitFor();
   await page.locator('#navigation [data-page="french-emergent"]').click();
   await page.getByRole("heading", { name: "Emergent." }).waitFor();
-  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire"]) {
+  for (const [tab, heading, panel] of [
+    ["vocabulary","Vocabulary · Vocabulaire","vocabulary"],
+    ["conjugations","Conjugations · Conjugaison","conjugations"],
+    ["grammar","Grammar · Grammaire","grammar"],
+    ["reading","AI Reading Studio · Compréhension","reading"]
+  ]) {
+    await page.locator('[data-french-skill-tab="' + tab + '"]').click();
+    await page.locator('[data-skill-panel="' + panel + '"]').waitFor({state:"visible"});
     await page.getByRole("heading", { name: heading }).waitFor();
+    if (await page.locator('[data-skill-panel]:visible').count() !== 1) throw new Error("Only the selected French skill tab should be visible.");
   }
+  await page.locator('[data-french-skill-tab="vocabulary"]').click();
   if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
   if (await page.locator(".fd-card").count() !== 3) throw new Error("French workspace should render vocabulary, conjugation and grammar decks.");
   if (await page.locator(".fd-progress").count() !== 3) throw new Error("Each French flashcard deck should show progress.");
@@ -83,6 +92,7 @@ try {
   if (deckSizes.verbs < 2500) throw new Error("French conjugations should cover at least 2,500 verbs.");
   if (Object.keys(deckSizes.tenses).length !== 5 || Object.values(deckSizes.tenses).some(n => n < 2500)) throw new Error("Each core tense should cover at least 2,500 verbs.");
   if (await page.locator(".conjugation-tab").count() !== 5) throw new Error("French conjugations should have five switchable tense tabs.");
+  await page.locator('[data-french-skill-tab="conjugations"]').click();
   const search = page.locator("[data-french-search=emconj-present]");
   await search.fill("parler");
   const conjugationAnswer = await page.locator("[data-deck-root=emconj-present] .fd-answer").textContent();
@@ -91,9 +101,12 @@ try {
   if (await page.locator("[data-deck-root=emconj-passeCompose] .fd-card strong").textContent() !== "parler") throw new Error("Switching tense tabs should keep the same selected verb.");
   const compoundAnswer = await page.locator("[data-deck-root=emconj-passeCompose] .fd-answer").textContent();
   if (!compoundAnswer.includes("j'ai parlé")) throw new Error("The passé composé tab should show the selected verb's conjugation.");
+  await page.locator('[data-french-skill-tab="grammar"]').click();
   if (await page.locator(".grammar-lesson-body > p").first().textContent().then(x => x.length) < 180) throw new Error("Grammar lessons should include full explanations.");
-  if (await page.locator(".reading-ai").count() !== 1) throw new Error("French should show the AI Reading Studio.");
+  await page.locator('[data-french-skill-tab="reading"]').click();
+  if (await page.locator(".reading-ai:visible").count() !== 1) throw new Error("French should show the AI Reading Studio when its tab is selected.");
   if (await page.locator(".french-vocab-item, .french-reading-item").count() !== 0) throw new Error("Static vocabulary tiles and static reading passages should be removed.");
+  await page.locator('[data-french-skill-tab="vocabulary"]').click();
   await page.locator(".fd-card").first().click();
   if (!(await page.locator(".fd-card").first().evaluate(el => el.classList.contains("flipped")))) throw new Error("Flashcard should flip to reveal its answer.");
   await page.locator("[data-french-rate=known]").first().click();
