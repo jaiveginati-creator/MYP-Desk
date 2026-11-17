@@ -60,7 +60,7 @@ try {
   await page.locator('#navigation [data-page="home"]').click();
   await page.locator("#pageContent .home-shell").waitFor();
   await page.locator('#pageContent [data-page="french"]').click();
-  await page.getByRole("heading", { name: "Choose your course." }).waitFor();
+  await page.getByRole("heading", { name: "French workspace." }).waitFor();
   await page.locator('#navigation [data-page="french-emergent"]').click();
   await page.getByRole("heading", { name: "Emergent." }).waitFor();
   for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire","Reading · Compréhension écrite"]) {
