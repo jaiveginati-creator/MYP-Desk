@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
         temperature: action === "quiz" ? 0.35 : 0.55,
-        max_tokens: action === "quiz" ? 5000 : 3000,
+        max_completion_tokens: action === "quiz" ? 5000 : 3000,
         ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
       })
