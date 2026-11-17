@@ -58,3 +58,8 @@ node --test tests/ai.test.mjs
 ```
 
 These tests cover local fallback actions, note-grounded question matching, unknown questions, quiz styles, answer-key consistency, and empty-input handling.
+
+
+## Frontend validation
+
+Pull requests run a Chromium smoke test that checks inline JavaScript syntax, app startup, French course navigation, both six-unit pathways, and the listening/speaking controls.
