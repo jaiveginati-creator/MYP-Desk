@@ -27,7 +27,7 @@ const apiSyntax = spawnSync(process.execPath, ["--check", "api/ai.js"], { encodi
 if (apiSyntax.status !== 0) throw new Error("AI API failed syntax check:\\n" + apiSyntax.stderr);
 const englishSyntax = spawnSync(process.execPath, ["--check", "english-assessment.js"], { encoding: "utf8" });
 if (englishSyntax.status !== 0) throw new Error("English assessment frontend failed syntax check:\n" + englishSyntax.stderr);
-const apiTests = spawnSync(process.execPath, ["--test", "tests/*.test.mjs"], { encoding: "utf8" });
+const apiTests = spawnSync(process.execPath, ["--test"], { encoding: "utf8" });
 if (apiTests.status !== 0) throw new Error("E-assessment API tests failed:\\n" + apiTests.stdout + apiTests.stderr);
 
 const browser = await chromium.launch({ headless: true });
