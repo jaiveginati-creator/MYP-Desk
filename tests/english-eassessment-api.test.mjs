@@ -213,6 +213,17 @@ test("returns 502 with the Groq schema error when both attempts are rejected by 
   });
 });
 
+test("normalizes model-supplied task labels to the canonical requested task type",async()=>{
+  const mislabeled={...task(1,"Analysing",30),type:"Producing non-literary text"};
+  await withAI(async()=>{
+    globalThis.fetch=queueFetch([{payload:mislabeled}]);
+    const res=recorder();
+    await handler({method:"POST",body:{action:"english_eassessment",taskType:"type1",level:"MYP 4",theme:"Identities and relationships"}},res);
+    assert.equal(res.statusCode,200);
+    assert.equal(res.payload.paper.tasks[0].type,"Analysing");
+  });
+});
+
 test("returns English feedback capped at the question's available marks",async()=>{
   await withAI(async()=>{
     globalThis.fetch=queueFetch([{payload:{score:99,maxScore:20,strengths:["Clear comparison"],improvements:["Use evidence from both sources"],feedback:"A strong response."}}],request=>{
