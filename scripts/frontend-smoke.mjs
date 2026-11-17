@@ -4,9 +4,18 @@ import { chromium } from "playwright";
 import { pathToFileURL } from "node:url";
 
 const html = fs.readFileSync("index.html", "utf8");
-const inlineScripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
-  .filter(([, attrs]) => !/\\bsrc\\s*=/.test(attrs))
-  .map(([, , code]) => code);
+const inlineScripts = [];
+let cursor = 0;
+while (true) {
+  const start = html.indexOf("<script", cursor);
+  if (start < 0) break;
+  const tagEnd = html.indexOf(">", start);
+  const close = html.indexOf("</script>", tagEnd);
+  if (tagEnd < 0 || close < 0) throw new Error("Malformed script tag in index.html");
+  const openingTag = html.slice(start, tagEnd + 1);
+  if (!openingTag.includes("src=")) inlineScripts.push(html.slice(tagEnd + 1, close));
+  cursor = close + "</script>".length;
+}
 if (!inlineScripts.length) throw new Error("No inline application script found.");
 for (const [index, code] of inlineScripts.entries()) {
   const check = spawnSync(process.execPath, ["--check"], { input: code, encoding: "utf8" });
