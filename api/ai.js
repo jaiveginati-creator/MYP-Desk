@@ -311,6 +311,12 @@ Use the current published MYP Language & Literature blueprint as the structural 
 TASK REQUIREMENTS:
 ${selected.map((key,i)=>"TASK "+(i+1)+" — "+taskGuidance[key]).join("\\n\\n")}
 Make all passages, visual descriptions, data, prompts and questions completely original. Use broad patterns seen in MYP practice and past-paper formats, but NEVER copy or closely paraphrase any actual past-paper wording, source passage, question or model answer. Do not assume the student has access to an external video or website; describe all required visual/multimedia evidence within the source. Use age-appropriate, intellectually engaging MYP 4–5 themes. Ensure every question is answerable from the supplied sources or prompt. Use the selected global context as a lens, not as a formula.
+EXACT TASK AND QUESTION COUNTS:
+- The root "tasks" array MUST contain exactly ${requestedType === "full" ? 3 : 1} task object(s). A focused task contains exactly one task; a full paper contains exactly three task objects in this order: Analysing, Producing literary text, Producing non-literary text.
+- EVERY task object MUST include the "questions" property as an array. Never omit it, including for creative-writing and non-literary-writing tasks.
+- Analysing has exactly five question objects. Literary and non-literary production each have exactly one question object containing the complete writing prompt.
+- Each task object must include taskNumber, type, title, marks, instructions, sources, and questions. Each question must include every field shown in the JSON example; use empty strings or [] for fields that do not apply.
+- Do not treat the single task in the example as the requested task count. Expand it to the exact count above.
 CRITICAL JSON SHAPE RULE: The response MUST be one JSON OBJECT at the root, not a JSON array. The first non-whitespace character must be { and the last non-whitespace character must be }. Never return a top-level array, even when generating multiple tasks. The tasks array belongs INSIDE the root object under the "tasks" key. Do not wrap the object in an array or add any text, markdown fences, or commentary.
 Return only JSON in this exact shape:
 {"title":"...","theme":"...","taskType":"${requestedType}","durationMinutes":120,"totalMarks":80,"tasks":[{"taskNumber":1,"type":"Analysing","title":"...","marks":30,"instructions":"...","sources":[{"title":"...","format":"Written extract","content":"..."},{"title":"...","format":"Multimedia / visual text","content":"..."}],"questions":[{"id":"1a","question":"...","marks":2,"responseType":"short","commandTerm":"Identify","wordTarget":"","audience":"","purpose":"","genre":"","successCriteria":["..."]}]}]}
@@ -348,28 +354,62 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
   }
 
   try {
-    const upstream = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-        temperature: action === "quiz" ? 0.35 : ["reading","eassessment","english_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-        max_completion_tokens: ["eassessment","english_eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
-        ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
-        ...(responseFormat ? { response_format: responseFormat } : {}),
-        messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
-      })
-    });
-    const payload = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      const message = payload && payload.error && payload.error.message;
-      return send(res, upstream.status === 429 ? 429 : 502, { error: message || "Groq could not complete the request. Please try again." });
+    let content = "";
+    let englishPaper = null;
+    const isEnglishPaper = action === "english_eassessment";
+    const requestedEnglishType = ["type1","type2","type3","full"].includes(body.taskType) ? body.taskType : "type1";
+    const maxAttempts = isEnglishPaper ? 2 : 1;
+    let lastEnglishError = "";
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const attemptContent = attempt === 0 ? userContent : `${userContent}
+
+RETRY CORRECTION — the previous generation failed validation: ${lastEnglishError}
+Regenerate the COMPLETE paper from the beginning. Do not return a partial paper. Follow the exact root-object structure and exact task count. Every task MUST contain a "questions" array. Include all required question fields, even when their values are empty strings or arrays. For a full paper, return exactly three task objects; for a focused task, return exactly one. Check the task count, question count, required properties, and mark totals before returning the JSON.`;
+
+      const upstream = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || DEFAULT_MODEL,
+          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","english_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 0.25 : 0.55,
+          max_completion_tokens: isEnglishPaper ? 16000 : ["eassessment","english_eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
+          ...(responseFormat ? { response_format: responseFormat } : {}),
+          messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
+        })
+      });
+      const payload = await upstream.json().catch(() => ({}));
+      if (!upstream.ok) {
+        const message = payload && payload.error && payload.error.message;
+        const detail = message || "Groq could not complete the request. Please try again.";
+        const schemaFailure = /jsonschema|failed_generation|schema|missing properties|expected object|expected array/i.test(detail);
+        if (isEnglishPaper && schemaFailure && attempt + 1 < maxAttempts) {
+          lastEnglishError = detail;
+          continue;
+        }
+        return send(res, upstream.status === 429 ? 429 : 502, { error: detail });
+      }
+
+      content = payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+      if (!content) return send(res, 502, { error: "Groq returned an empty response." });
+
+      if (isEnglishPaper) {
+        try {
+          englishPaper = validateEnglishPaper(parseJson(content), requestedEnglishType);
+          break;
+        } catch (error) {
+          lastEnglishError = error && error.message ? error.message : "The generated paper did not match the required structure.";
+          if (attempt + 1 < maxAttempts) continue;
+          throw error;
+        }
+      }
+      break;
     }
-    const content = payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
-    if (!content) return send(res, 502, { error: "Groq returned an empty response." });
-    if(action==="english_eassessment"){
-      const paper=validateEnglishPaper(parseJson(content),["type1","type2","type3","full"].includes(body.taskType)?body.taskType:"type1");
-      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+
+    if (isEnglishPaper) {
+      if (!englishPaper) throw new Error(lastEnglishError || "The AI could not generate a complete English paper.");
+      return send(res, 200, { paper: englishPaper, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
     }
     if(action==="english_eassessment_mark"){
       const assessment=validateEnglishMark(parseJson(content),Number(body.marks)||10);
