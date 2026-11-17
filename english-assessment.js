@@ -1,0 +1,94 @@
+/* MYP DESK — English Language & Literature eAssessment practice */
+(() => {
+"use strict";
+const API=()=>window.PARLER_AI_API_URL;
+const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tabs=[
+ {id:"type1",label:"TYPE 1",title:"Analysing",sub:"Short responses + compare and contrast",marks:"30 MARKS"},
+ {id:"type2",label:"TYPE 2",title:"Literary text",sub:"Creative writing from a visual prompt",marks:"20 MARKS"},
+ {id:"type3",label:"TYPE 3",title:"Non-literary text",sub:"Purposeful writing for a real audience",marks:"30 MARKS"},
+ {id:"full",label:"FULL PAPER",title:"Full assessment",sub:"All three tasks in exam conditions",marks:"80 MARKS"}
+];
+const themes=["Identities and relationships","Orientation in space and time","Personal and cultural expression","Scientific and technical innovation","Globalization and sustainability","Fairness and development"];
+let activeTab="type1",lastPaper=null;
+function markup(){
+ return `<div class="english-assessment">
+ <div class="eyebrow">MYP 4 & MYP 5 · LANGUAGE & LITERATURE</div>
+ <h1>English e-assessment prep.</h1>
+ <p class="intro">Practise the three MYP eAssessment tasks with original AI-generated texts, prompts and questions. Generate a focused task or a complete timed paper.</p>
+ <div class="eng-overview"><div class="eng-stat"><strong>3</strong><span>Assessment tasks</span></div><div class="eng-stat"><strong>80</strong><span>Total marks</span></div><div class="eng-stat"><strong>120 min</strong><span>Full paper duration</span></div></div>
+ <div class="eng-tabs" role="tablist" aria-label="English assessment task type">${tabs.map(t=>`<button type="button" class="eng-tab ${t.id===activeTab?"active":""}" role="tab" aria-selected="${t.id===activeTab}" data-eng-tab="${t.id}"><span>${t.label} · ${t.marks}</span><strong>${t.title}</strong></button>`).join("")}</div>
+ <div class="eng-panel">
+ <div class="eng-panel-head"><div><h2 id="eng-panel-title">${tabs.find(t=>t.id===activeTab).title} practice.</h2><p id="eng-panel-sub">${tabs.find(t=>t.id===activeTab).sub}. Questions follow the published MYP Language & Literature assessment framework.</p></div><span class="eng-tag">GROQ AI · ORIGINAL PRACTICE</span></div>
+ <div class="eng-config"><div><label for="eng-level">Level</label><select id="eng-level"><option>MYP 4</option><option selected>MYP 4–5</option><option>MYP 5</option></select></div><div><label for="eng-theme">Global context</label><select id="eng-theme">${themes.map(t=>`<option>${t}</option>`).join("")}<option>Surprise me</option></select></div></div>
+ <div class="eng-generate-row"><button type="button" class="btn" id="eng-generate">Generate ${activeTab==="full"?"full assessment":"practice task"} ↗</button><span class="eng-note" id="eng-status" aria-live="polite">Fresh unseen texts and original prompts are generated each time.</span></div>
+ </div>
+ <div class="eng-results" id="eng-results"><div class="eng-empty"><strong>Ready to practise.</strong>Choose a task above and generate an original MYP-style practice set. Your generated paper will appear here.</div></div>
+ <div class="page-footer">MYP DESK · ENGLISH LANGUAGE & LITERATURE · PRACTICE, NOT AN OFFICIAL IB PAPER</div>
+ </div>`;
+}
+function setTab(id){
+ if(!tabs.some(t=>t.id===id))return;activeTab=id;
+ const title=document.getElementById("eng-panel-title"),sub=document.getElementById("eng-panel-sub"),btn=document.getElementById("eng-generate");
+ const t=tabs.find(x=>x.id===id);
+ document.querySelectorAll("[data-eng-tab]").forEach(b=>{const on=b.dataset.engTab===id;b.classList.toggle("active",on);b.setAttribute("aria-selected",String(on))});
+ if(title)title.textContent=t.title+".";
+ if(sub)sub.textContent=t.sub+". Questions follow the published MYP Language & Literature assessment framework.";
+ if(btn)btn.textContent="Generate "+(id==="full"?"full assessment":"practice task")+" ↗";
+ const status=document.getElementById("eng-status");if(status)status.textContent="Fresh unseen texts and original prompts are generated each time.";
+ const results=document.getElementById("eng-results");if(results)results.innerHTML='<div class="eng-empty"><strong>'+escapeHTML(t.title)+' practice.</strong>Generate a new set of original questions for this task.</div>';
+ lastPaper=null;
+}
+function renderSource(source){
+ return '<div class="eng-source"><div class="eng-source-top"><strong>'+escapeHTML(source.title)+'</strong><span>'+escapeHTML(source.format)+'</span></div><p>'+escapeHTML(source.content)+'</p></div>';
+}
+function renderQuestion(q,taskIndex,questionIndex){
+ const id="eng-answer-"+taskIndex+"-"+questionIndex;
+ const target=q.wordTarget?'<small>Suggested length: '+escapeHTML(q.wordTarget)+'</small>':'<small>Answer in complete sentences and use evidence from the source where relevant.</small>';
+ return '<article class="eng-question" data-eng-question="'+taskIndex+'-'+questionIndex+'"><div class="eng-question-top"><span>QUESTION '+escapeHTML(q.id||String(questionIndex+1))+(q.commandTerm?" · "+escapeHTML(q.commandTerm.toUpperCase()):"")+'</span><strong>'+Number(q.marks||0)+' MARKS</strong></div><h4>'+escapeHTML(q.question)+'</h4><textarea id="'+id+'" data-eng-answer placeholder="Write your response here…"></textarea><div class="eng-question-actions">'+target+'<button type="button" class="btn secondary" data-eng-mark="'+taskIndex+'-'+questionIndex+'">Get AI feedback</button></div><div class="eng-feedback" data-eng-feedback hidden></div></article>';
+}
+function renderPaper(paper){
+ if(!paper||!Array.isArray(paper.tasks)||!paper.tasks.length)throw new Error("The AI returned an incomplete assessment.");
+ let html='<div class="eng-paper-head"><span>'+escapeHTML(paper.durationMinutes)+' MINUTES · '+escapeHTML(paper.totalMarks)+' MARKS</span><h2>'+escapeHTML(paper.title)+'</h2><p>Global context: '+escapeHTML(paper.theme)+'. Original practice material generated for this session. Complete the questions in order.</p></div>';
+ paper.tasks.forEach((task,ti)=>{
+ html+='<section class="eng-task"><div class="eng-task-top"><span>TASK '+escapeHTML(task.taskNumber)+' · '+escapeHTML(task.type.toUpperCase())+'</span><strong>'+Number(task.marks||0)+' MARKS</strong></div><h3>'+escapeHTML(task.title)+'</h3><p class="eng-instructions">'+escapeHTML(task.instructions)+'</p>';
+ (task.sources||[]).forEach(source=>{html+=renderSource(source)});
+ (task.questions||[]).forEach((q,qi)=>{html+=renderQuestion(q,ti,qi)});
+ html+='</section>';
+ });
+ return html;
+}
+async function generate(){
+ const button=document.getElementById("eng-generate"),status=document.getElementById("eng-status"),results=document.getElementById("eng-results");
+ if(!button||!status||!results)return;
+ const level=document.getElementById("eng-level").value,theme=document.getElementById("eng-theme").value;
+ button.disabled=true;button.textContent="Generating…";status.textContent="Creating unseen texts, questions and writing prompts…";results.innerHTML='<div class="eng-loading">The AI is building your paper and checking the task structure. This can take a little while.</div>';
+ try{
+  const response=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment",taskType:activeTab,level,theme})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Assessment generation failed.");
+  if(!data.paper)throw new Error("The AI did not return a complete paper.");
+  lastPaper=data.paper;results.innerHTML=renderPaper(data.paper);status.textContent="Your practice paper is ready. Work through the tasks and request feedback on each response.";
+ }catch(error){results.innerHTML='<div class="eng-empty"><strong>Could not generate the paper.</strong>'+escapeHTML(error.message||"Please try again.")+'</div>';status.textContent="Generation failed."}
+ finally{button.disabled=false;button.textContent="Generate "+(activeTab==="full"?"full assessment":"practice task")+" ↗"}
+}
+async function mark(taskIndex,questionIndex,button){
+ if(!lastPaper)return;
+ const task=lastPaper.tasks[taskIndex],q=task?.questions?.[questionIndex],textarea=document.getElementById("eng-answer-"+taskIndex+"-"+questionIndex),feedback=document.querySelector('[data-eng-question="'+taskIndex+"-"+questionIndex+'"] [data-eng-feedback]');
+ if(!q||!textarea||!feedback)return;
+ const response=textarea.value.trim();if(response.length<15){feedback.hidden=false;feedback.textContent="Write a little more before requesting feedback.";return}
+ button.disabled=true;button.textContent="Assessing…";feedback.hidden=false;feedback.textContent="Reviewing your response against the task and MYP criteria…";
+ try{
+  const res=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment_mark",level:document.getElementById("eng-level").value,taskType:task.type,taskTitle:task.title,question:q.question,marks:q.marks,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],sources:(task.sources||[]).map(s=>s.content).join("\n\n"),response})});
+  const data=await res.json();if(!res.ok)throw new Error(data.error||"Feedback request failed.");
+  const a=data.assessment;if(!a)throw new Error("The AI returned no assessment.");
+  feedback.innerHTML='<strong>Estimated practice score: '+Number(a.score)+' / '+Number(a.maxScore||q.marks)+'</strong>\n'+escapeHTML(a.feedback)+'\n\nSTRENGTHS\n• '+(a.strengths||[]).map(escapeHTML).join('\n• ')+'\n\nNEXT STEPS\n• '+(a.improvements||[]).map(escapeHTML).join('\n• ');
+ }catch(error){feedback.textContent="Could not assess this response: "+error.message}
+ finally{button.disabled=false;button.textContent="Get AI feedback"}
+}
+function handleClick(event){
+ const tab=event.target.closest("[data-eng-tab]");if(tab){setTab(tab.dataset.engTab);return}
+ if(event.target.closest("#eng-generate")){generate();return}
+ const markButton=event.target.closest("[data-eng-mark]");if(markButton){const parts=markButton.dataset.engMark.split("-").map(Number);mark(parts[0],parts[1],markButton)}
+}
+window.EnglishAssessment=Object.freeze({markup,handleClick});
+})();
