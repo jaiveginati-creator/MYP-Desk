@@ -82,11 +82,15 @@ try {
   if (!(await page.locator("[data-deck-root=emvocab] .fd-card strong").textContent()).includes("maison")) throw new Error("Vocabulary search should find words without requiring their article.");
   if (deckSizes.verbs < 2500) throw new Error("French conjugations should cover at least 2,500 verbs.");
   if (Object.keys(deckSizes.tenses).length !== 5 || Object.values(deckSizes.tenses).some(n => n < 2500)) throw new Error("Each core tense should cover at least 2,500 verbs.");
-  if (await page.locator(".conjugation-tense-block").count() !== 5) throw new Error("French conjugations should be separated into five tense sections.");
+  if (await page.locator(".conjugation-tab").count() !== 5) throw new Error("French conjugations should have five switchable tense tabs.");
   const search = page.locator("[data-french-search=emconj-present]");
   await search.fill("parler");
   const conjugationAnswer = await page.locator("[data-deck-root=emconj-present] .fd-answer").textContent();
   if (!conjugationAnswer.includes("je parle")) throw new Error("Present conjugation should show all subject forms.");
+  await page.locator('[data-conjugation-tab="passeCompose"]').click();
+  if (await page.locator("[data-deck-root=emconj-passeCompose] .fd-card strong").textContent() !== "parler") throw new Error("Switching tense tabs should keep the same selected verb.");
+  const compoundAnswer = await page.locator("[data-deck-root=emconj-passeCompose] .fd-answer").textContent();
+  if (!compoundAnswer.includes("j'ai parlé")) throw new Error("The passé composé tab should show the selected verb's conjugation.");
   if (await page.locator(".grammar-lesson-body > p").first().textContent().then(x => x.length) < 180) throw new Error("Grammar lessons should include full explanations.");
   if (await page.locator(".reading-ai").count() !== 1) throw new Error("French should show the AI Reading Studio.");
   if (await page.locator(".french-vocab-item, .french-reading-item").count() !== 0) throw new Error("Static vocabulary tiles and static reading passages should be removed.");
