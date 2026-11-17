@@ -54,3 +54,19 @@
 .eng-empty strong{display:block;color:#d7dce4;font-size:13px;margin-bottom:5px}
 @media(max-width:760px){.eng-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.eng-overview{gap:7px}.eng-stat{padding:12px}.eng-panel{padding:16px}}
 @media(max-width:520px){.eng-config{grid-template-columns:1fr}.eng-panel-head{display:block}.eng-tag{display:inline-block;margin-top:10px}.eng-task{padding:13px}.eng-overview{grid-template-columns:1fr 1fr}.eng-stat:last-child{grid-column:1/-1}}
+
+.eng-timer{padding:17px 18px;border:1px solid #48566a;border-radius:11px;background:linear-gradient(135deg,#1b2532,#121820);display:grid;gap:11px}
+.eng-timer-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.eng-timer-label{display:block;color:#aebbd0;font-size:9px;letter-spacing:.14em}
+.eng-timer-clock{font-size:29px;font-weight:650;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:#f2f4f7;margin:4px 0}
+.eng-timer-state{font-size:10px;color:#aab4c2}
+.eng-timer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.eng-timer-actions .btn{min-height:36px}
+.eng-timer-track{height:5px;background:#313d4c;border-radius:8px;overflow:hidden}
+.eng-timer-track span{display:block;height:100%;width:100%;background:#aab8ca;transition:width .3s linear}
+.eng-timer p{font-size:11px;line-height:1.65;color:#d0d7e1;margin:0}
+.eng-timer small{font-size:9px;color:#8e9aaa}
+.eng-timer.warning .eng-timer-clock{color:#e8c77f}
+.eng-timer.warning .eng-timer-track span{background:#d4ae64}
+.eng-timer.expired .eng-timer-clock{color:#e59b91}
+.eng-timer.expired .eng-timer-track span{background:#c7776e}
