@@ -23,7 +23,7 @@ This repository includes a Vercel serverless function in `api/ai.js` and a `verc
 3. Redeploy after adding the environment variables.
 4. Open the deployed site and test the Notes Assistant and quiz builder.
 
-Do not paste the API key into `index.html`, `ai.js`, `groq-client.js`, or commit it to GitHub. The `.env.example` file is only a variable-name template and contains no secret.
+Privacy: notes remain in browser storage until the student uses the assistant or quiz builder. At that point, only the selected notes are sent to Groq through the server-side API for processing. Do not include sensitive personal information in study notes.\n\nDo not paste the API key into `index.html`, `ai.js`, `groq-client.js`, or commit it to GitHub. The `.env.example` file is only a variable-name template and contains no secret.
 
 ## Local study-engine tests
 
