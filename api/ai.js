@@ -231,7 +231,8 @@ Task: ${writingTask}
 Student response: ${response}
 Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short snippets if needed. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
     }
-    responseFormat = action === "eassessment"\n      ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)\n      : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
+    responseFormat = action === "eassessment"
+      ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)\n      : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
   if (action === "quiz") {
     const count = Math.max(1, Math.min(20, Number(body.count) || 10));
@@ -261,7 +262,8 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
         temperature: action === "quiz" ? 0.35 : ["reading","eassessment"].includes(action) ? 0.65 : action === "eassessment_mark" ? 0.25 : 0.55,
-        max_completion_tokens: action === "eassessment" ? 10000 : action === "eassessment_mark" ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,\n        ...(action === "eassessment" || action === "eassessment_mark" ? { reasoning_effort: "low" } : {}),
+        max_completion_tokens: action === "eassessment" ? 10000 : action === "eassessment_mark" ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+        ...(action === "eassessment" || action === "eassessment_mark" ? { reasoning_effort: "low" } : {}),
         ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
       })
