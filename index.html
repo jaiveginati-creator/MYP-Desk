@@ -981,7 +981,7 @@ let activeEassessmentPaper = null;
 function renderEassessmentPaper(paper,prefix){
  const questions=(task,key)=>task.questions.map((q,i)=>'<fieldset class="ea-question" data-ea-question data-ea-task="'+key+'" data-ea-index="'+i+'" data-correct-index="'+q.correctIndex+'"><legend><span>'+(i+1)+'.</span> '+frenchEscape(q.question)+'</legend><div class="ea-options">'+q.options.map((option,j)=>'<label><input type="radio" name="'+prefix+'-ea-'+key+'-'+i+'" value="'+j+'"><span>'+frenchEscape(option)+'</span></label>').join("")+'</div><div class="ea-question-feedback" aria-live="polite"></div></fieldset>').join("");
  return '<article class="ea-paper"><header class="ea-paper-head"><span>ORIGINAL PRACTICE PAPER · '+frenchEscape(paper.level)+'</span><h3>'+frenchEscape(paper.title)+'</h3><p>'+frenchEscape(paper.theme)+' · 72 marks</p></header>'+
- '<section class="ea-task"><div class="ea-task-head"><div><span>01 · CRITERION A</span><h3>Listening comprehension</h3></div><strong>24 marks</strong></div><p class="ea-task-instruction">Listen to the French audio and answer all six questions. You can replay it.</p><button class="btn secondary ea-play" type="button" data-play-ea-listening>▶ Play listening</button><div class="ea-questions">'+questions(paper.listening,"listening")+'</div><div class="ea-transcript" data-ea-transcript hidden><strong>Listening transcript</strong><p>'+frenchEscape(paper.listening.text)+'</p></div></section>'+
+ '<section class="ea-task"><div class="ea-task-head"><div><span>01 · CRITERION A</span><h3>Listening comprehension</h3></div><strong>24 marks</strong></div><p class="ea-task-instruction">Listen to the French audio and answer all six questions. You can replay it.</p><button class="btn secondary ea-play" type="button" data-play-ea-listening>▶ Play listening</button><p class="ea-audio-status" data-ea-audio-status aria-live="polite"></p><div class="ea-questions">'+questions(paper.listening,"listening")+'</div><div class="ea-transcript" data-ea-transcript hidden><strong>Listening transcript</strong><p>'+frenchEscape(paper.listening.text)+'</p></div></section>'+
  '<section class="ea-task"><div class="ea-task-head"><div><span>02 · CRITERION B</span><h3>Reading comprehension</h3></div><strong>24 marks</strong></div><div class="ea-reading-text">'+frenchEscape(paper.reading.text)+'</div><div class="ea-questions">'+questions(paper.reading,"reading")+'</div></section>'+
  '<section class="ea-task"><div class="ea-task-head"><div><span>03 · CRITERION D</span><h3>Writing in response to a text</h3></div><strong>24 marks</strong></div><div class="ea-stimulus"><span>'+frenchEscape(paper.writing.stimulusTitle)+'</span><p>'+frenchEscape(paper.writing.stimulus)+'</p></div><p class="ea-writing-task">'+frenchEscape(paper.writing.task)+'</p><div class="ea-writing-meta"><span>Audience: '+frenchEscape(paper.writing.audience)+'</span><span>Purpose: '+frenchEscape(paper.writing.purpose)+'</span><span>Suggested length: '+frenchEscape(paper.writing.wordTarget)+'</span></div><textarea class="field ea-writing-response" data-ea-writing-response rows="10" placeholder="Write your response in French here…"></textarea><button class="btn secondary ea-mark-writing" type="button" data-mark-ea-writing>Get AI feedback · /24</button><div class="ea-writing-feedback" data-ea-writing-feedback aria-live="polite"></div></section>'+
  '<div class="ea-submit-row"><button class="btn" type="button" data-submit-ea-objective>Mark listening + reading ↗</button><div class="ea-objective-result" data-ea-objective-result aria-live="polite"></div></div><p class="ea-disclaimer">Practice only — not an official IB examination or predicted grade. Listening playback uses your browser’s French speech voice.</p></article>';
@@ -1023,7 +1023,36 @@ async function handleFrenchStudyClick(e){
   return;
  }
  const playListening=e.target.closest("[data-play-ea-listening]");
- if(playListening){if(!activeEassessmentPaper)return;const script=activeEassessmentPaper.listening.text;if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){const transcript=content.querySelector("[data-ea-transcript]");if(transcript)transcript.hidden=false;return}window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(script);utterance.lang="fr-FR";utterance.rate=.9;const voice=window.speechSynthesis.getVoices().find(v=>/^fr[-_]/i.test(v.lang));if(voice)utterance.voice=voice;window.speechSynthesis.speak(utterance);playListening.textContent="↻ Replay listening";return}
+ if(playListening){
+  if(!activeEassessmentPaper)return;
+  const paperRoot=playListening.closest(".ea-paper"),transcript=paperRoot?.querySelector("[data-ea-transcript]"),status=paperRoot?.querySelector("[data-ea-audio-status]"),script=activeEassessmentPaper.listening.text;
+  if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio playback is not supported in this browser. Use the listening transcript instead.";return}
+  const synth=window.speechSynthesis;
+  if(synth.speaking||synth.pending){synth.cancel();playListening.textContent="▶ Play listening";if(status)status.textContent="Playback stopped.";return}
+  playListening.disabled=true;playListening.textContent="Loading French voice…";if(status)status.textContent="Preparing French audio…";
+  try{
+   let voices=synth.getVoices();
+   if(!voices.length)voices=await new Promise(resolve=>{let finished=false;const done=()=>{if(finished)return;finished=true;synth.removeEventListener("voiceschanged",changed);clearTimeout(timer);resolve(synth.getVoices())};const changed=()=>{if(synth.getVoices().length)done()};const timer=setTimeout(done,1800);synth.addEventListener("voiceschanged",changed);});
+   const frenchVoices=voices.filter(v=>/^fr(?:[-_]|$)/i.test(v.lang));
+   const voice=frenchVoices.find(v=>/^fr[-_]FR$/i.test(v.lang))||frenchVoices.find(v=>/^fr[-_]CA$/i.test(v.lang))||frenchVoices[0];
+   if(!voice){if(transcript)transcript.hidden=false;if(status)status.textContent="No French speech voice is available in this browser. The transcript is shown below; try enabling/downloading a French voice in your device’s speech settings.";playListening.textContent="▶ Play listening";playListening.disabled=false;return}
+   synth.cancel();
+   const sentences=script.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[script],chunks=[];let chunk="";
+   for(const sentence of sentences){const part=sentence.trim();if(!part)continue;if(chunk&&(chunk.length+part.length+1)>180){chunks.push(chunk);chunk=part}else chunk+=(chunk?" ":"")+part}
+   if(chunk)chunks.push(chunk);
+   let index=0,failed=false;
+   const speakNext=()=>{
+    if(index>=chunks.length){playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent="Listening finished. You can replay it.";return}
+    const utterance=new SpeechSynthesisUtterance(chunks[index++]);utterance.voice=voice;utterance.lang=voice.lang||"fr-FR";utterance.rate=.88;utterance.pitch=1;
+    utterance.onend=speakNext;
+    utterance.onerror=()=>{if(failed)return;failed=true;synth.cancel();if(transcript)transcript.hidden=false;if(status)status.textContent="The browser could not play the French audio. The transcript is shown below.";playListening.disabled=false;playListening.textContent="▶ Try listening again"};
+    synth.speak(utterance);
+   };
+   if(status)status.textContent="Playing in "+voice.name+" ("+voice.lang+").";
+   playListening.disabled=false;playListening.textContent="■ Stop listening";speakNext();
+  }catch(err){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio could not start: "+err.message;playListening.disabled=false;playListening.textContent="▶ Try listening again"}
+  return;
+ }
  const submitObjective=e.target.closest("[data-submit-ea-objective]");
  if(submitObjective){const paperRoot=submitObjective.closest(".ea-paper");if(!paperRoot||paperRoot.dataset.objectiveSubmitted==="true")return;const items=[...paperRoot.querySelectorAll("[data-ea-question]")],unanswered=items.filter(item=>!item.querySelector("input:checked")),result=paperRoot.querySelector("[data-ea-objective-result]");if(unanswered.length){result.textContent="Answer all "+items.length+" listening and reading questions before marking.";return}let total=0;for(const item of items){const chosen=Number(item.querySelector("input:checked").value),correct=Number(item.dataset.correctIndex),isCorrect=chosen===correct;if(isCorrect)total+=4;const feedback=item.querySelector(".ea-question-feedback");feedback.textContent=(isCorrect?"Correct · ":"Not quite · ")+item.querySelectorAll(".ea-options label span")[correct].textContent;feedback.classList.toggle("correct",isCorrect);feedback.classList.toggle("incorrect",!isCorrect)}paperRoot.dataset.objectiveSubmitted="true";const transcript=paperRoot.querySelector("[data-ea-transcript]");if(transcript)transcript.hidden=false;submitObjective.disabled=true;result.innerHTML='<strong>'+total+' / 48</strong><span> Listening + Reading</span><p>Each question is worth 4 marks. Review the transcript and feedback above.</p>';return}
  const markWriting=e.target.closest("[data-mark-ea-writing]");
