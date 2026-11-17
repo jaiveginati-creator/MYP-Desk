@@ -67,8 +67,8 @@ try {
     await page.getByRole("heading", { name: heading }).waitFor();
   }
   if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
-  if (await page.locator(".fd-card").count() !== 7) throw new Error("French workspace should render seven flashcard decks.");
-  if (await page.locator(".fd-progress").count() !== 7) throw new Error("Each French flashcard deck should show progress.");
+  if (await page.locator(".fd-card").count() !== 3) throw new Error("French workspace should render vocabulary, conjugation and grammar decks.");
+  if (await page.locator(".fd-progress").count() !== 3) throw new Error("Each French flashcard deck should show progress.");
   if (await page.locator(".grammar-lesson").count() !== 50) throw new Error("French grammar should contain exactly 50 expandable lessons.");
   if (await page.locator(".grammar-example").count() !== 50) throw new Error("Every grammar lesson should include a worked example and translation.");
   const deckSizes = await page.evaluate(() => ({
