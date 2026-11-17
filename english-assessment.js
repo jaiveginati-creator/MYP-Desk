@@ -127,7 +127,7 @@ async function mark(taskIndex,questionIndex,button){
 }
 function assessmentFeedbackHTML(a,maxScore){
  const score=Number(a.score)||0;
- return '<strong>Estimated practice score: '+score+' / '+Number(a.maxScore||maxScore)+'</strong>\\n'+escapeHTML(a.feedback)+'\\n\\nSTRENGTHS\\n• '+(a.strengths||[]).map(escapeHTML).join('\\n• ')+'\\n\\nNEXT STEPS\\n• '+(a.improvements||[]).map(escapeHTML).join('\\n• ');
+ return '<strong>Estimated practice score: '+score+' / '+Number(a.maxScore||maxScore)+'</strong>\n'+escapeHTML(a.feedback)+'\n\nSTRENGTHS\n• '+(a.strengths||[]).map(escapeHTML).join('\n• ')+'\n\nNEXT STEPS\n• '+(a.improvements||[]).map(escapeHTML).join('\n• ');
 }
 function practiceBand(percent){
  if(percent<10)return 1;
@@ -161,7 +161,7 @@ async function submitFullAssessment(button){
      assessment={score:0,maxScore:max,feedback:response?"This response is too short to assess reliably. Develop your answer with relevant explanation and evidence.":"No response submitted. This question receives 0 in this practice calculation.",strengths:[],improvements:["Complete the response and support your ideas with specific evidence."]};
     }else{
      if(feedback){feedback.hidden=false;feedback.textContent="AI is assessing this response…"}
-     const res=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment_mark",level:document.getElementById("eng-level").value,taskType:task.type,taskTitle:task.title,question:q.question,marks:max,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],sources:(task.sources||[]).map(s=>s.content).join("\\n\\n"),response})});
+     const res=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment_mark",level:document.getElementById("eng-level").value,taskType:task.type,taskTitle:task.title,question:q.question,marks:max,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],sources:(task.sources||[]).map(s=>s.content).join("\n\n"),response})});
      const data=await res.json();
      if(!res.ok)throw new Error(data.error||("Grading failed for Task "+(ti+1)+", Question "+(qi+1)+"." ));
      if(!data.assessment)throw new Error("The AI returned no assessment for Task "+(ti+1)+", Question "+(qi+1)+".");
