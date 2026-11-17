@@ -159,10 +159,8 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else {
+  } else if (!["eassessment", "eassessment_mark"].includes(action)) {
     const task = {
-      eassessment: "",
-      eassessment_mark: "",
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
         : `Explain this simply for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, define only necessary terms, and include a simple example only when useful. Use reliable general knowledge and keep scientific details accurate. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. No headings, bullets, numbered lists, tables, or quiz.` ,
