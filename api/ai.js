@@ -127,23 +127,17 @@ const EASSESSMENT_MARK_SCHEMA = {
 };
 
 
-const ENGLISH_PAPER_SCHEMA = {
+const ENGLISH_TASK_SCHEMA = {
   type:"object",
   properties:{
-    title:{type:"string"},theme:{type:"string"},taskType:{type:"string"},
-    durationMinutes:{type:"integer"},totalMarks:{type:"integer"},
-    tasks:{type:"array",items:{
-      type:"object",properties:{
-        taskNumber:{type:"integer"},type:{type:"string"},title:{type:"string"},marks:{type:"integer"},instructions:{type:"string"},
-        sources:{type:"array",items:{type:"object",properties:{title:{type:"string"},format:{type:"string"},content:{type:"string"}},required:["title","format","content"],additionalProperties:false}},
-        questions:{type:"array",items:{type:"object",properties:{
-          id:{type:"string"},question:{type:"string"},marks:{type:"integer"},responseType:{type:"string"},commandTerm:{type:"string"},
-          wordTarget:{type:"string"},audience:{type:"string"},purpose:{type:"string"},genre:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}
-        },required:["id","question","marks","responseType","commandTerm","wordTarget","audience","purpose","genre","successCriteria"],additionalProperties:false}}
-      },required:["taskNumber","type","title","marks","instructions","sources","questions"],additionalProperties:false
-    }}
+    taskNumber:{type:"integer"},type:{type:"string"},title:{type:"string"},marks:{type:"integer"},instructions:{type:"string"},
+    sources:{type:"array",items:{type:"object",properties:{title:{type:"string"},format:{type:"string"},content:{type:"string"}},required:["title","format","content"],additionalProperties:false}},
+    questions:{type:"array",items:{type:"object",properties:{
+      id:{type:"string"},question:{type:"string"},marks:{type:"integer"},responseType:{type:"string"},commandTerm:{type:"string"},
+      wordTarget:{type:"string"},audience:{type:"string"},purpose:{type:"string"},genre:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}
+    },required:["id","question","marks","responseType","commandTerm","wordTarget","audience","purpose","genre","successCriteria"],additionalProperties:false}}
   },
-  required:["title","theme","taskType","durationMinutes","totalMarks","tasks"],additionalProperties:false
+  required:["taskNumber","type","title","marks","instructions","sources","questions"],additionalProperties:false
 };
 const ENGLISH_MARK_SCHEMA = {
   type:"object",properties:{
@@ -151,30 +145,36 @@ const ENGLISH_MARK_SCHEMA = {
     improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}
   },required:["score","maxScore","strengths","improvements","feedback"],additionalProperties:false
 };
-function validateEnglishPaper(data,requestedType){
-  if(!data||!Array.isArray(data.tasks))throw new Error("The AI returned an incomplete English practice paper.");
-  const full=requestedType==="full",expected=full?3:1;
-  if(data.tasks.length!==expected)throw new Error("The generated English paper has the wrong number of tasks.");
-  const taskRules=full?["analysing","literary","non-literary"]:[requestedType==="type1"?"analysing":requestedType==="type2"?"literary":"non-literary"];
-  const tasks=data.tasks.map((task,index)=>{
-    if(!task||!Array.isArray(task.sources)||!Array.isArray(task.questions)||!task.questions.length)throw new Error("English task "+(index+1)+" is incomplete.");
-    const expectedMarks=taskRules[index]==="analysing"?30:taskRules[index]==="literary"?20:30;
-    if(Number(task.marks)!==expectedMarks)throw new Error("English task "+(index+1)+" has an incorrect mark total.");
-    if(taskRules[index]==="analysing"&&(task.sources.length<2||task.questions.length!==5))throw new Error("The analysing task must contain two sources and five questions.");
-    if(taskRules[index]!=="analysing"&&(task.sources.length<1||task.questions.length!==1))throw new Error("The writing task must contain a stimulus and one clear writing prompt.");
-    const questions=task.questions.map((q,qi)=>{
-      if(!q||typeof q.question!=="string"||!q.question.trim()||!Number.isInteger(Number(q.marks))||Number(q.marks)<1)throw new Error("A question in English task "+(index+1)+" is invalid.");
-      return {id:String(q.id||qi+1).slice(0,12),question:q.question.trim().slice(0,3500),marks:Number(q.marks),responseType:String(q.responseType||"extended").slice(0,40),commandTerm:String(q.commandTerm||"").slice(0,60),wordTarget:String(q.wordTarget||"").slice(0,100),audience:String(q.audience||"").slice(0,250),purpose:String(q.purpose||"").slice(0,250),genre:String(q.genre||"").slice(0,100),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,8):[]};
-    });
-    if(questions.reduce((sum,q)=>sum+q.marks,0)!==expectedMarks)throw new Error("The question marks in English task "+(index+1)+" do not add up correctly.");
-    if(taskRules[index]==="analysing"&&(questions.slice(0,4).reduce((sum,q)=>sum+q.marks,0)!==10||questions[4].marks!==20||questions.slice(0,4).some(q=>q.responseType!=="short")||questions[4].responseType!=="extended"))throw new Error("The analysing task must have four short-response questions worth 10 marks and one 20-mark extended comparison.");
-    const sources=task.sources.map(source=>({title:String(source.title||"Source").slice(0,180),format:String(source.format||"Text").slice(0,80),content:String(source.content||"").trim().slice(0,10000)}));
-    if(sources.some(source=>!source.content))throw new Error("An English source is empty.");
-    return {taskNumber:index+1,type:String(task.type||taskRules[index]).slice(0,60),title:String(task.title||"Task "+(index+1)).slice(0,180),marks:expectedMarks,instructions:String(task.instructions||"").slice(0,1600),sources,questions};
+function englishTaskRules(requestedType){
+  return requestedType==="full" ? ["analysing","literary","non-literary"]
+    : [requestedType==="type1" ? "analysing" : requestedType==="type2" ? "literary" : "non-literary"];
+}
+function englishTaskMarks(rule){ return rule==="analysing" ? 30 : rule==="literary" ? 20 : 30; }
+function validateEnglishTask(task,rule,index){
+  if(!task || typeof task!=="object") throw new Error("English task "+(index+1)+" is missing.");
+  if(!Array.isArray(task.sources) || !task.sources.length) throw new Error("English task "+(index+1)+" must include at least one source.");
+  if(!Array.isArray(task.questions) || !task.questions.length) throw new Error("English task "+(index+1)+" is missing its questions array.");
+  const expectedMarks=englishTaskMarks(rule);
+  if(Number(task.marks)!==expectedMarks)throw new Error("English task "+(index+1)+" has an incorrect mark total.");
+  if(rule==="analysing"&&(task.sources.length<2||task.questions.length!==5))throw new Error("The analysing task must contain two sources and five questions.");
+  if(rule!=="analysing"&&task.questions.length!==1)throw new Error("The writing task must contain exactly one writing prompt question.");
+  const questions=task.questions.map((q,qi)=>{
+    if(!q||typeof q.question!=="string"||!q.question.trim()||!Number.isInteger(Number(q.marks))||Number(q.marks)<1)throw new Error("A question in English task "+(index+1)+" is invalid.");
+    return {id:String(q.id||qi+1).slice(0,12),question:q.question.trim().slice(0,3500),marks:Number(q.marks),responseType:String(q.responseType||"extended").slice(0,40),commandTerm:String(q.commandTerm||"").slice(0,60),wordTarget:String(q.wordTarget||"").slice(0,100),audience:String(q.audience||"").slice(0,250),purpose:String(q.purpose||"").slice(0,250),genre:String(q.genre||"").slice(0,100),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,8):[]};
   });
+  if(questions.reduce((sum,q)=>sum+q.marks,0)!==expectedMarks)throw new Error("The question marks in English task "+(index+1)+" do not add up correctly.");
+  if(rule==="analysing"&&(questions.slice(0,4).reduce((sum,q)=>sum+q.marks,0)!==10||questions[4].marks!==20||questions.slice(0,4).some(q=>q.responseType!=="short")||questions[4].responseType!=="extended"))throw new Error("The analysing task must have four short-response questions worth 10 marks and one 20-mark extended comparison.");
+  const sources=task.sources.map(source=>({title:String(source&&source.title||"Source").slice(0,180),format:String(source&&source.format||"Text").slice(0,80),content:String(source&&source.content||"").trim().slice(0,10000)}));
+  if(sources.some(source=>!source.content))throw new Error("An English source is empty.");
+  return {taskNumber:index+1,type:String(task.type||rule).slice(0,60),title:String(task.title||"Task "+(index+1)).slice(0,180),marks:expectedMarks,instructions:String(task.instructions||"").slice(0,1600),sources,questions};
+}
+function assembleEnglishPaper(tasks,requestedType,theme){
+  const full=requestedType==="full";
   const total=tasks.reduce((sum,task)=>sum+task.marks,0);
-  if(Number(data.totalMarks)!==total||total!==(full?80:taskRules[0]==="literary"?20:taskRules[0]==="analysing"?30:30))throw new Error("The English paper mark total is incorrect.");
-  return {title:String(data.title||"English practice assessment").slice(0,180),theme:String(data.theme||"").slice(0,120),taskType:requestedType,durationMinutes:full?120:taskRules[0]==="analysing"?70:taskRules[0]==="literary"?35:15,totalMarks:total,tasks};
+  const expectedTotal=full?80:tasks[0].marks;
+  if(total!==expectedTotal)throw new Error("The English paper mark total is incorrect.");
+  const rules=englishTaskRules(requestedType);
+  return {title:String(theme ? theme+" — English practice paper" : "English practice assessment").slice(0,180),theme:String(theme||"").slice(0,120),taskType:requestedType,durationMinutes:full?120:rules[0]==="analysing"?70:rules[0]==="literary"?35:15,totalMarks:total,tasks};
 }
 function validateEnglishMark(data,maxMarks){
   if(!data||!Number.isFinite(Number(data.score)))throw new Error("The AI returned invalid English feedback.");
@@ -183,6 +183,71 @@ function validateEnglishMark(data,maxMarks){
     strengths:Array.isArray(data.strengths)?data.strengths.map(String).slice(0,5):[],
     improvements:Array.isArray(data.improvements)?data.improvements.map(String).slice(0,5):[],
     feedback:String(data.feedback||"").slice(0,3500)};
+}
+
+const ENGLISH_TYPE_KEY = { analysing:"type1", literary:"type2", "non-literary":"type3" };
+const ENGLISH_TYPE_LABEL = { analysing:"Analysing", literary:"Producing literary text", "non-literary":"Producing non-literary text" };
+const ENGLISH_TASK_GUIDANCE = {
+  type1:"Create Task 1: Analysing, worth exactly 30 marks. Provide TWO substantial original unseen sources: one written literary or non-literary extract and one multimedia/visual text represented with a detailed, observable description (for example a short film, advert, poster or photo sequence). Include exactly five questions: four shorter analysis questions worth 2, 2, 3 and 3 marks (10 total) about creator's choices, language, structure, visual/cinematic techniques, audience and purpose; then one extended compare-and-contrast question worth 20 marks requiring synthesis of both sources. The extended response target is about 350–400 words. Questions should use clear command terms and require specific evidence. The short responses should not duplicate the comparative essay.",
+  type2:"Create Task 2: Producing literary text, worth exactly 20 marks. Provide one original visual prompt described vividly enough to imagine (do not rely on an unavailable image). Provide exactly one creative writing prompt that asks the student to produce a literary text such as a short story, scene, opening/ending, diary entry, dialogue or descriptive piece. Make the stimulus and prompt original and linked to the chosen global context without being overly prescriptive. Target approximately 350–400 words. Assess creativity, development, structure, stylistic choices and language control.",
+  type3:"Create Task 3: Producing non-literary text, worth exactly 30 marks. Provide one or more original stimulus items such as a short quote, poster copy, brief survey/data summary or community notice. Provide exactly one authentic non-literary writing task. Specify a suitable text type (for example speech, blog, opinion column, article, letter, review, proposal, podcast transcript or campaign text), audience and purpose. Target approximately 350–450 words. The task must require students to shape content, register, structure and persuasive or informative choices for the intended audience and global context."
+};
+function englishTaskPrompt(theme,level,requestedType,rule,index,total,correction){
+  const key=ENGLISH_TYPE_KEY[rule],marks=englishTaskMarks(rule),typeLabel=ENGLISH_TYPE_LABEL[rule];
+  const jsonExample = rule==="analysing"
+    ? '{"taskNumber":'+(index+1)+',"type":"Analysing","title":"...","marks":30,"instructions":"...","sources":[{"title":"...","format":"Written extract","content":"..."},{"title":"...","format":"Multimedia / visual text","content":"..."}],"questions":[{"id":"1a","question":"...","marks":2,"responseType":"short","commandTerm":"Identify","wordTarget":"","audience":"","purpose":"","genre":"","successCriteria":["..."]},{"id":"1e","question":"...","marks":20,"responseType":"extended","commandTerm":"Compare and contrast","wordTarget":"350–400 words","audience":"Examiner","purpose":"Analyse","genre":"Comparative response","successCriteria":["..."]}]}'
+    : '{"taskNumber":'+(index+1)+',"type":"'+typeLabel+'","title":"...","marks":'+marks+',"instructions":"...","sources":[{"title":"...","format":"Visual / stimulus description","content":"..."}],"questions":[{"id":"'+(index+1)+'a","question":"The complete writing prompt.","marks":'+marks+',"responseType":"writing","commandTerm":"Create","wordTarget":"350–450 words","audience":"...","purpose":"...","genre":"...","successCriteria":["..."]}]}';
+  return `Create ORIGINAL MYP English Language & Literature eAssessment practice TASK ${index+1} of ${total} for ${level}. Selected global context: ${theme}. Selected mode: ${requestedType}.
+Use the current published MYP Language & Literature blueprint as the structural guide. A complete paper is 120 minutes and 80 marks. This request generates ONLY task ${index+1}; the server assembles the full paper. Generate NO other tasks.
+TASK REQUIREMENTS:
+${ENGLISH_TASK_GUIDANCE[key]}
+Make all passages, visual descriptions, data, prompts and questions completely original. NEVER copy or closely paraphrase any actual past-paper wording, source passage, question or model answer. Do not assume the student has access to an external video or website; describe all required visual/multimedia evidence within the source. Use age-appropriate, intellectually engaging MYP 4–5 themes. Ensure every question is answerable from the supplied sources or prompt. Use the selected global context as a lens, not as a formula.
+STRICT OUTPUT RULES:
+- Return ONLY ONE JSON OBJECT for this task at the root. Never return a top-level array, never return a full paper wrapper, never add markdown fences or commentary. The first non-whitespace character must be { and the last must be }.
+- The task object MUST include the "questions" array and it MUST be non-empty, even for creative-writing and non-literary-writing tasks.
+- Every question MUST include every field shown in the JSON example; use empty strings or [] for fields that do not apply.
+- taskNumber must be ${index+1}; marks must be ${marks}.${rule==="analysing" ? " The analysing task has exactly five questions: four short questions worth 2, 2, 3 and 3 marks (10 total) and one 20-mark extended comparison." : " Exactly one question object containing the complete writing prompt and worth all "+marks+" marks."}
+- Question marks must add up to exactly ${marks}.
+Return only JSON in this exact shape (replace the placeholder text with original content):
+${jsonExample}${correction||""}`;
+}
+async function requestEnglishTask(apiKey,model,system,theme,level,requestedType,rule,index,total){
+  let lastError="";
+  for(let attempt=0;attempt<2;attempt++){
+    const correction=attempt===0?"":"\n\nRETRY CORRECTION — the previous attempt failed validation: "+lastError+"\nRegenerate ONLY this single task object from the beginning. Every task MUST include the \"questions\" array with all required question fields. Check the question count, the mark split and every required property before returning the JSON.";
+    const upstream=await fetch(GROQ_URL,{
+      method:"POST",
+      headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model,
+        temperature:0.65,
+        max_completion_tokens:rule==="analysing"?7000:3000,
+        reasoning_effort:"low",
+        response_format:strictJsonFormat("english_eassessment_task",ENGLISH_TASK_SCHEMA),
+        messages:[{role:"system",content:system},{role:"user",content:englishTaskPrompt(theme,level,requestedType,rule,index,total,correction)}]
+      })
+    });
+    const payload=await upstream.json().catch(()=>({}));
+    if(!upstream.ok){
+      const message=payload&&payload.error&&payload.error.message;
+      const detail=message||"Groq could not complete the request. Please try again.";
+      const schemaFailure=/jsonschema|failed_generation|schema|missing properties|expected object|expected array/i.test(detail);
+      if(schemaFailure&&attempt+1<2){lastError=detail;continue;}
+      const error=new Error(detail);
+      error.statusCode=upstream.status===429?429:502;
+      throw error;
+    }
+    const content=payload.choices&&payload.choices[0]&&payload.choices[0].message&&payload.choices[0].message.content;
+    if(!content){lastError="Groq returned an empty response.";continue;}
+    try{
+      return validateEnglishTask(parseJson(content),rule,index);
+    }catch(error){
+      lastError=error&&error.message?error.message:"The generated task did not match the required structure.";
+      if(attempt+1<2)continue;
+      throw new Error("English task "+(index+1)+" could not be generated: "+lastError);
+    }
+  }
+  throw new Error("English task "+(index+1)+" could not be generated: "+(lastError||"The AI could not produce a complete task."));
 }
 
 function strictJsonFormat(name, schema) {
@@ -295,35 +360,9 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
       : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
 
-  if(action==="english_eassessment"||action==="english_eassessment_mark"){
-    const requestedType=["type1","type2","type3","full"].includes(body.taskType)?body.taskType:"type1";
+  if(action==="english_eassessment_mark"){
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
-    const theme=cleanText(body.theme,160)||"Identities and relationships";
-    if(action==="english_eassessment"){
-      const taskGuidance={
-        type1:"Create Task 1: Analysing, worth exactly 30 marks. Provide TWO substantial original unseen sources: one written literary or non-literary extract and one multimedia/visual text represented with a detailed, observable description (for example a short film, advert, poster or photo sequence). Include exactly five questions: four shorter analysis questions worth 2, 2, 3 and 3 marks (10 total) about creator's choices, language, structure, visual/cinematic techniques, audience and purpose; then one extended compare-and-contrast question worth 20 marks requiring synthesis of both sources. The extended response target is about 350–400 words. Questions should use clear command terms and require specific evidence. The short responses should not duplicate the comparative essay.",
-        type2:"Create Task 2: Producing literary text, worth exactly 20 marks. Provide one original visual prompt described vividly enough to imagine (do not rely on an unavailable image). Provide exactly one creative writing prompt that asks the student to produce a literary text such as a short story, scene, opening/ending, diary entry, dialogue or descriptive piece. Make the stimulus and prompt original and linked to the chosen global context without being overly prescriptive. Target approximately 350–400 words. Assess creativity, development, structure, stylistic choices and language control.",
-        type3:"Create Task 3: Producing non-literary text, worth exactly 30 marks. Provide one or more original stimulus items such as a short quote, poster copy, brief survey/data summary or community notice. Provide exactly one authentic non-literary writing task. Specify a suitable text type (for example speech, blog, opinion column, article, letter, review, proposal, podcast transcript or campaign text), audience and purpose. Target approximately 350–450 words. The task must require students to shape content, register, structure and persuasive or informative choices for the intended audience and global context."
-      };
-      const selected=requestedType==="full"?["type1","type2","type3"]:[requestedType];
-      userContent=`Create an ORIGINAL MYP English Language & Literature eAssessment practice paper for ${level}. Selected global context: ${theme}. Selected mode: ${requestedType}.
-Use the current published MYP Language & Literature blueprint as the structural guide: Task 1 Analysing = 30 marks (short analysis questions plus extended comparison of two unseen texts); Task 2 Producing literary text = 20 marks (creative writing); Task 3 Producing non-literary text = 30 marks (purposeful non-literary writing). A complete paper is 120 minutes and 80 marks. For a focused task, generate only that task. For a full paper, generate all three tasks, in order, for 80 marks total.
-TASK REQUIREMENTS:
-${selected.map((key,i)=>"TASK "+(i+1)+" — "+taskGuidance[key]).join("\\n\\n")}
-Make all passages, visual descriptions, data, prompts and questions completely original. Use broad patterns seen in MYP practice and past-paper formats, but NEVER copy or closely paraphrase any actual past-paper wording, source passage, question or model answer. Do not assume the student has access to an external video or website; describe all required visual/multimedia evidence within the source. Use age-appropriate, intellectually engaging MYP 4–5 themes. Ensure every question is answerable from the supplied sources or prompt. Use the selected global context as a lens, not as a formula.
-EXACT TASK AND QUESTION COUNTS:
-- The root "tasks" array MUST contain exactly ${requestedType === "full" ? 3 : 1} task object(s). A focused task contains exactly one task; a full paper contains exactly three task objects in this order: Analysing, Producing literary text, Producing non-literary text.
-- EVERY task object MUST include the "questions" property as an array. Never omit it, including for creative-writing and non-literary-writing tasks.
-- Analysing has exactly five question objects. Literary and non-literary production each have exactly one question object containing the complete writing prompt.
-- Each task object must include taskNumber, type, title, marks, instructions, sources, and questions. Each question must include every field shown in the JSON example; use empty strings or [] for fields that do not apply.
-- Do not treat the single task in the example as the requested task count. Expand it to the exact count above.
-CRITICAL JSON SHAPE RULE: The response MUST be one JSON OBJECT at the root, not a JSON array. The first non-whitespace character must be { and the last non-whitespace character must be }. Never return a top-level array, even when generating multiple tasks. The tasks array belongs INSIDE the root object under the "tasks" key. Do not wrap the object in an array or add any text, markdown fences, or commentary.
-Return only JSON in this exact shape:
-{"title":"...","theme":"...","taskType":"${requestedType}","durationMinutes":120,"totalMarks":80,"tasks":[{"taskNumber":1,"type":"Analysing","title":"...","marks":30,"instructions":"...","sources":[{"title":"...","format":"Written extract","content":"..."},{"title":"...","format":"Multimedia / visual text","content":"..."}],"questions":[{"id":"1a","question":"...","marks":2,"responseType":"short","commandTerm":"Identify","wordTarget":"","audience":"","purpose":"","genre":"","successCriteria":["..."]}]}]}
-The example above shows the required root OBJECT. For a full paper, place all THREE task objects in the same "tasks" array; do not change the root type. Preserve all six top-level keys exactly: title, theme, taskType, durationMinutes, totalMarks, tasks.
-For focused type1, marks 30 and duration 45. For focused type2, marks 20 and duration 30. For focused type3, marks 30 and duration 45. For a full paper, include exactly three tasks and 80 marks. Task 1 must have exactly five questions totalling 30 marks (four short questions adding to 10 and one comparison question worth 20). Task 2 and Task 3 each have exactly one writing prompt worth their full task marks. Include all required fields; use empty strings or arrays where a field does not apply. Keep question mark totals exact.`;
-      responseFormat=strictJsonFormat("english_eassessment_paper",ENGLISH_PAPER_SCHEMA);
-    }else{
+    {
       const question=cleanText(body.question,3500),response=cleanText(body.response,16000),maxMarks=Number(body.marks)||10;
       if(!question||response.length<15)return send(res,400,{error:"Write your English response before requesting feedback."});
       userContent=`Give formative MYP English Language & Literature feedback for a ${level} student. Task type: ${cleanText(body.taskType,80)}. Task title: ${cleanText(body.taskTitle,180)}. Question: ${question}. Available marks: ${maxMarks}. Command term: ${cleanText(body.commandTerm,60)}. Success criteria supplied by the paper: ${JSON.stringify(Array.isArray(body.successCriteria)?body.successCriteria.slice(0,8):[])}. Source material: ${cleanText(body.sources,10000)}. Student response: ${response}.
@@ -354,26 +393,33 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
   }
 
   try {
+    if(action==="english_eassessment"){
+      const requestedType=["type1","type2","type3","full"].includes(body.taskType)?body.taskType:"type1";
+      const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+      const theme=cleanText(body.theme,160)||"Identities and relationships";
+      const model=process.env.GROQ_MODEL||DEFAULT_MODEL;
+      const rules=englishTaskRules(requestedType);
+      const tasks=[];
+      for(let index=0;index<rules.length;index++){
+        tasks.push(await requestEnglishTask(apiKey,model,system,theme,level,requestedType,rules[index],index,rules.length));
+      }
+      const paper=assembleEnglishPaper(tasks,requestedType,theme);
+      return send(res,200,{paper,provider:"groq",model});
+    }
+
     let content = "";
-    let englishPaper = null;
-    const isEnglishPaper = action === "english_eassessment";
-    const requestedEnglishType = ["type1","type2","type3","full"].includes(body.taskType) ? body.taskType : "type1";
-    const maxAttempts = isEnglishPaper ? 2 : 1;
-    let lastEnglishError = "";
+    const maxAttempts = 1;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const attemptContent = attempt === 0 ? userContent : `${userContent}
-
-RETRY CORRECTION — the previous generation failed validation: ${lastEnglishError}
-Regenerate the COMPLETE paper from the beginning. Do not return a partial paper. Follow the exact root-object structure and exact task count. Every task MUST contain a "questions" array. Include all required question fields, even when their values are empty strings or arrays. For a full paper, return exactly three task objects; for a focused task, return exactly one. Check the task count, question count, required properties, and mark totals before returning the JSON.`;
+      const attemptContent = userContent;
 
       const upstream = await fetch(GROQ_URL, {
         method: "POST",
         headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","english_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: isEnglishPaper ? 16000 : ["eassessment","english_eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          temperature: action === "quiz" ? 0.35 : ["reading","eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 0.25 : 0.55,
+          max_completion_tokens: ["eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
           ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
@@ -383,34 +429,14 @@ Regenerate the COMPLETE paper from the beginning. Do not return a partial paper.
       if (!upstream.ok) {
         const message = payload && payload.error && payload.error.message;
         const detail = message || "Groq could not complete the request. Please try again.";
-        const schemaFailure = /jsonschema|failed_generation|schema|missing properties|expected object|expected array/i.test(detail);
-        if (isEnglishPaper && schemaFailure && attempt + 1 < maxAttempts) {
-          lastEnglishError = detail;
-          continue;
-        }
         return send(res, upstream.status === 429 ? 429 : 502, { error: detail });
       }
 
       content = payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
       if (!content) return send(res, 502, { error: "Groq returned an empty response." });
-
-      if (isEnglishPaper) {
-        try {
-          englishPaper = validateEnglishPaper(parseJson(content), requestedEnglishType);
-          break;
-        } catch (error) {
-          lastEnglishError = error && error.message ? error.message : "The generated paper did not match the required structure.";
-          if (attempt + 1 < maxAttempts) continue;
-          throw error;
-        }
-      }
       break;
     }
 
-    if (isEnglishPaper) {
-      if (!englishPaper) throw new Error(lastEnglishError || "The AI could not generate a complete English paper.");
-      return send(res, 200, { paper: englishPaper, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
-    }
     if(action==="english_eassessment_mark"){
       const assessment=validateEnglishMark(parseJson(content),Number(body.marks)||10);
       return send(res,200,{assessment,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
@@ -430,6 +456,6 @@ Regenerate the COMPLETE paper from the beginning. Do not return a partial paper.
     const formattedText = action === "flashcards" ? formatFlashcards(content) : String(content).trim();
     return send(res, 200, { text: formattedText, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
   } catch (error) {
-    return send(res, 502, { error: error && error.message ? error.message : "The AI request failed." });
+    return send(res, (error && error.statusCode) || 502, { error: error && error.message ? error.message : "The AI request failed." });
   }
 }
