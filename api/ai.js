@@ -229,7 +229,7 @@ Each listening and reading task must have exactly six questions, each with exact
 Stimulus: ${stimulus}
 Task: ${writingTask}
 Student response: ${response}
-Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short snippets if needed. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
+Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short French snippets if needed. IMPORTANT: Write ALL assessment feedback in ENGLISH, including every item in strengths and improvements and the overall feedback paragraph. The student response and any quoted example snippets may remain in French, but all explanations, comments, and advice must be in clear, age-appropriate English. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
     }
     responseFormat = action === "eassessment"
       ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)

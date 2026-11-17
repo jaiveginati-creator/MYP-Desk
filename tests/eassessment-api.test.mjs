@@ -44,11 +44,13 @@ test("generates a validated three-task French e-assessment paper", async () => {
 test("returns formative writing feedback with a score capped at 24", async () => {
   const previousKey=process.env.GROQ_API_KEY, previousFetch=globalThis.fetch;
   process.env.GROQ_API_KEY="test-key";
-  globalThis.fetch=async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({score:31,strengths:["Clear ideas"],improvements:["Check verb endings"],feedback:"A promising response."})}}]}),{status:200,headers:{"Content-Type":"application/json"}});
+  let assessmentPrompt="";
+  globalThis.fetch=async(url,options)=>{assessmentPrompt=JSON.parse(options.body).messages[1].content;return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({score:31,strengths:["Clear ideas"],improvements:["Check verb endings"],feedback:"A promising response."})}}]}),{status:200,headers:{"Content-Type":"application/json"}})};
   try {
     const res=responseRecorder();
     await handler({method:"POST",body:{action:"eassessment_mark",level:"Emergent",writingTask:"Write an email.",stimulus:"School event poster.",response:"Bonjour, je voudrais participer à cette activité parce que j'aime travailler avec mes amis."}},res);
     assert.equal(res.statusCode,200);
+    assert.match(assessmentPrompt,/ALL assessment feedback in ENGLISH/);
     assert.equal(res.payload.assessment.score,24);
     assert.equal(res.payload.assessment.strengths[0],"Clear ideas");
   } finally {
