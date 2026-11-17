@@ -556,6 +556,63 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 .course-feedback{font-size:10px;color:#b9c2ce;line-height:1.6;margin-top:9px;min-height:16px}
 .course-footer-note{font-size:10px;color:#858d9a;line-height:1.7;margin-top:22px;padding:14px;border:1px solid #303743;border-radius:9px}
 @media(max-width:750px){.french-level-grid,.course-chapters{grid-template-columns:1fr}.course-top{display:block}.course-back{margin-bottom:18px}}
+
+/* SPACING PASS — clearer rhythm and room to study */
+.content{padding:54px clamp(28px,4vw,58px) 76px}
+.content>.rule{margin:38px 0 30px}
+.intro{max-width:690px;line-height:1.85;margin-top:16px}
+.section-heading{margin-bottom:20px}
+.quick-grid{gap:16px}
+.quick-card{min-height:132px;padding:21px}
+.nav{gap:7px}
+.nav-link{min-height:44px}
+.home-overview{margin-top:58px}
+.overview-heading{margin-bottom:22px}
+.overview-grid{row-gap:0}
+.overview-card{padding:21px;min-height:194px}
+.home-bottom-grid{gap:18px;margin-top:20px}
+.home-notes-card,.home-quote-card{padding:26px}
+.subject-placeholder{padding:38px;gap:30px}
+.subject-meta-grid>div{padding:21px}
+.course-chapters{gap:14px}
+.course-chapter summary{padding:20px;gap:14px}
+.course-chapter-body{padding:24px}
+.course-block{margin-bottom:24px}
+.course-block h3{margin-bottom:11px}
+.course-block p{font-size:12px;line-height:1.9}
+.course-vocab{gap:10px}
+.course-vocab span{padding:11px 13px;line-height:1.5}
+.course-actions{gap:10px;margin-top:17px}
+.course-action{padding:11px 14px}
+.course-footer-note{margin-top:28px;padding:17px}
+@media(max-width:1000px){.content{padding:42px 28px 60px}.home-overview{margin-top:44px}}
+@media(max-width:650px){.content{padding:34px 17px 48px}.content>.rule{margin:29px 0 23px}.quick-grid{gap:11px}.quick-card{min-height:112px;padding:17px}.overview-card{padding:14px;min-height:166px}.home-bottom-grid{gap:12px}.home-notes-card,.home-quote-card{padding:19px}.subject-placeholder{padding:22px}.course-chapter summary{padding:16px;gap:10px}.course-chapter-body{padding:17px}.course-block{margin-bottom:20px}.course-vocab{grid-template-columns:1fr;gap:7px}}
+
+/* General French workspace: four skill-based areas, no unit-by-unit layout */
+.french-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.french-resource{min-width:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:25px}
+.french-resource-head{display:flex;gap:15px;align-items:flex-start;margin-bottom:22px}
+.french-resource-number{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:10px;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:700}
+.french-resource-head h2{font-size:17px;margin:0 0 6px;letter-spacing:-.02em}
+.french-resource-head p{font-size:11px;color:var(--muted);line-height:1.7;margin:0}
+.french-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.french-vocab-item,.french-conjugation-item{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.french-vocab-item strong,.french-vocab-item span{display:block;overflow-wrap:anywhere}
+.french-vocab-item strong{font-size:12px;margin-bottom:5px}
+.french-vocab-item span{font-size:11px;color:var(--muted)}
+.french-conjugation-list{display:grid;gap:9px}
+.french-conjugation-item strong{font-size:12px;display:block;margin-bottom:8px}
+.french-conjugation-item p{font-size:11px;line-height:1.9;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.french-grammar-list{margin:0;padding-left:20px;display:grid;gap:12px}
+.french-grammar-list li{font-size:12px;line-height:1.8;padding-left:4px}
+.french-reading-list{display:grid;gap:17px}
+.french-reading-item{padding:0 0 17px;border-bottom:1px solid var(--line)}
+.french-reading-item:last-child{padding-bottom:0;border:0}
+.french-reading-label{font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.french-reading-item h3{font-size:13px;margin:8px 0}
+.french-reading-item p{font-size:12px;line-height:1.9;margin:0;color:var(--text)}
+@media(max-width:900px){.french-resource-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.french-resource{padding:18px}.french-vocab-grid{grid-template-columns:1fr 1fr}.french-resource-head{gap:11px;margin-bottom:17px}}
 </style>
 </head>
 <body>
@@ -598,16 +655,8 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 (()=> {
 const labels={home:"Home",subjects:"All subjects",french:"French","french-emergent":"Emergent · Phases 1–2","french-capable":"Capable–Proficient · Phases 3–6","language-literature":"Language & Literature","individuals-societies":"Individuals & Societies",sciences:"Sciences",mathematics:"Mathematics",learning:"Learning",vocabulary:"Vocabulary",conjugation:"Conjugation",grammar:"Grammar",comprehension:"Comprehension",revision:"Revision",biology:"Biology",chemistry:"Chemistry",physics:"Physics",notes:"Notes & Quiz"};
 
-const frenchUnits=[
- ["Identités et diversité","Identity and diversity"],
- ["Ma vie numérique","My digital life"],
- ["La santé et le bien-être","Health and well-being"],
- ["Le monde du travail","The world of work"],
- ["Les médias et la publicité","Media and advertising"],
- ["La planète en danger","Planet in danger"]
-];
 const frenchCourses={
- emergent:{title:"Emergent",phase:"PHASES 1–2",subtitle:"Six shared MYP themes taught through accessible vocabulary, clear sentence patterns and everyday communication.",level:"Beginner",chapters:[
+ emergent:{title:"Emergent",phase:"PHASES 1–2",subtitle:"Build your foundations with accessible vocabulary, clear sentence patterns and everyday communication.",level:"Beginner",chapters:[
  ["Identités et diversité","Identity, family, personality and culture",[["l'identité","identity"],["la famille","family"],["un ami / une amie","a friend"],["un pays","a country"],["une langue","a language"],["différent(e)","different"]],"Être and avoir in the present; subject pronouns; adjective agreement; possessives mon/ma/mes.","Je suis curieux et j'aime découvrir d'autres cultures.","Je m'appelle Samira et j'habite en Inde. Dans ma famille, nous parlons deux langues. J'aime rencontrer des personnes différentes et découvrir leurs traditions.","Présente-toi, décris ta personnalité et parle d'une tradition de ta famille."],
  ["Ma vie numérique","Devices, online activities and safe digital habits",[["un téléphone","a phone"],["un ordinateur","a computer"],["un écran","a screen"],["un message","a message"],["un réseau social","a social network"],["protéger","to protect"]],"Present tense of regular -er verbs; pouvoir and devoir; frequency adverbs; simple negative forms ne…pas.","J'utilise mon téléphone pour communiquer avec mes amis.","J'utilise Internet pour apprendre, écouter de la musique et parler avec mes amis. Je ne partage pas mes informations personnelles avec des inconnus. Je fais des pauses loin des écrans.","Décris comment tu utilises la technologie et donne deux conseils de sécurité."],
  ["La santé et le bien-être","Healthy routines, food, exercise and feelings",[["la santé","health"],["le sommeil","sleep"],["un repas","a meal"],["un fruit","a fruit"],["faire du sport","to exercise"],["se reposer","to rest"]],"Reflexive verbs in the present; devoir and il faut; partitive articles du/de la/de l'/des.","Il faut dormir suffisamment et manger varié.","Pour être en bonne santé, je mange des fruits et des légumes. Je bois de l'eau et je fais du sport. Quand je suis fatigué, je me repose et j'essaie de dormir assez.","Décris une routine équilibrée et explique pourquoi elle est utile."],
@@ -615,7 +664,7 @@ const frenchCourses={
  ["Les médias et la publicité","News, entertainment, adverts and media choices",[["les médias","the media"],["une publicité","an advert"],["une annonce","an announcement"],["les nouvelles","the news"],["une émission","a programme"],["acheter","to buy"]],"Comparatives plus…que / moins…que; demonstratives ce/cette/ces; giving simple opinions with parce que.","Je préfère cette émission parce qu'elle est informative.","Je regarde parfois les informations et des vidéos en ligne. Les publicités présentent des produits, mais il faut réfléchir avant d'acheter quelque chose. Je préfère comparer plusieurs produits.","Décris un média que tu utilises et explique comment une publicité peut influencer les choix."],
  ["La planète en danger","Nature, pollution and simple environmental action",[["la planète","the planet"],["la pollution","pollution"],["les déchets","waste"],["recycler","to recycle"],["économiser l'eau","to save water"],["l'environnement","the environment"]],"Il faut + infinitive; pouvoir and devoir; near future; simple cause with parce que.","Nous devons protéger la planète.","La pollution est un problème important. À l'école, nous pouvons trier les déchets et utiliser moins de plastique. Il faut économiser l'eau et protéger les animaux.","Décris deux problèmes environnementaux et propose trois actions simples."]
  ]},
- capable:{title:"Capable–Proficient",phase:"PHASES 3–4 · 5–6",subtitle:"The same six MYP themes explored in greater depth, with more precise vocabulary, complex grammar, developed arguments and independent communication.",level:"Intermediate to advanced",chapters:[
+ capable:{title:"Capable–Proficient",phase:"PHASES 3–4 · 5–6",subtitle:"Develop more precise vocabulary, complex grammar, developed arguments and independent communication.",level:"Intermediate to advanced",chapters:[
  ["Identités et diversité","Identity, belonging, multiculturalism and social inclusion",[["l'appartenance","belonging"],["la diversité culturelle","cultural diversity"],["les origines","background / origins"],["un préjugé","a prejudice"],["l'intégration","integration"],["l'épanouissement","personal fulfilment"]],"Present, passé composé and imparfait; adjective placement/agreement; relative pronouns qui/que/dont; expressing contrast with pourtant and tandis que.","La diversité culturelle enrichit une société, à condition que chacun se sente respecté.","L'identité ne dépend pas uniquement du pays d'origine ou de la langue que l'on parle. Elle se construit aussi grâce aux expériences, aux relations et aux valeurs. Dans une société multiculturelle, la diversité peut favoriser l'ouverture d'esprit. Cependant, les préjugés risquent d'exclure certaines personnes et de limiter leur sentiment d'appartenance.","Explique comment la langue, la culture et les expériences personnelles façonnent l'identité. Présente aussi un défi lié à l'inclusion."],
  ["Ma vie numérique","Digital identity, privacy, misinformation and responsible technology",[["l'empreinte numérique","digital footprint"],["les données personnelles","personal data"],["la cybersécurité","cybersecurity"],["la désinformation","misinformation"],["la dépendance aux écrans","screen dependence"],["paramétrer la confidentialité","to set privacy controls"]],"Conditional present for advice; si + imparfait + conditionnel; passive voice; reported speech introduction; cause and consequence connectors.","Il serait indispensable que les utilisateurs vérifient leurs sources avant de partager une information.","Les outils numériques facilitent l'apprentissage et permettent de communiquer instantanément. Néanmoins, chaque publication contribue à notre empreinte numérique. Les fausses informations peuvent se diffuser rapidement, tandis que la collecte de données personnelles soulève des questions de confidentialité. Il faudrait donc développer l'esprit critique et adopter des habitudes responsables.","Évalue les avantages et les risques de la vie numérique. Donne des conseils précis en utilisant le conditionnel."],
  ["La santé et le bien-être","Physical and mental well-being, prevention and social influences",[["le bien-être psychologique","psychological well-being"],["la prévention","prevention"],["une alimentation équilibrée","a balanced diet"],["la pression sociale","social pressure"],["un mode de vie sédentaire","a sedentary lifestyle"],["prendre soin de soi","to look after oneself"]],"Subjunctive after il faut que / bien que / pour que; reflexive verbs; advice with il vaut mieux and il serait préférable de; depuis / pendant / il y a.","Il est essentiel que chacun puisse adopter des habitudes adaptées à ses besoins.","Le bien-être repose sur plusieurs éléments qui sont liés : le sommeil, l'activité physique, l'alimentation et les relations sociales. Bien que les conseils généraux soient utiles, les besoins varient d'une personne à l'autre. Il est donc préférable de rechercher un équilibre réaliste plutôt que de suivre des tendances sans esprit critique.","Analyse les facteurs qui influencent le bien-être des adolescents et propose des mesures adaptées, en justifiant tes idées."],
@@ -624,11 +673,38 @@ const frenchCourses={
  ["La planète en danger","Climate change, biodiversity, sustainability and collective responsibility",[["le dérèglement climatique","climate disruption"],["la biodiversité","biodiversity"],["la déforestation","deforestation"],["les ressources naturelles","natural resources"],["la transition énergétique","energy transition"],["le développement durable","sustainable development"]],"Subjunctive and conditional; future simple; passive voice; si + present + future; structured argument connectors (d'une part, en revanche, par conséquent).","Il faudrait que les gouvernements et les citoyens coopèrent afin de préserver les ressources naturelles.","Le dérèglement climatique menace les écosystèmes et accentue certaines inégalités. La transition énergétique peut réduire la dépendance aux combustibles fossiles, mais elle exige des investissements et une coopération internationale. Les choix individuels comptent également, même si les changements à grande échelle nécessitent des décisions politiques et économiques.","Évalue la responsabilité des individus, des entreprises et des gouvernements face à la crise environnementale. Défends une conclusion à l'aide d'exemples."]
  ]}
 };
-function frenchMarkup(){return `<div class="eyebrow">LANGUAGE ACQUISITION · FRENCH</div><h1>Choose your course.</h1><p class="intro">Two pathways for the six units in your French course. Both courses cover the same six units, with different levels of difficulty and depth.</p><div class="rule"></div><div class="french-level-grid"><button class="french-level-card" data-page="french-emergent"><span class="french-level-tag">01 · ${frenchCourses.emergent.phase}</span><h2>Emergent.</h2><p>Build confidence with everyday French: introductions, school, food, hobbies, travel and familiar situations.</p><div class="french-level-meta"><span>6 units</span><span>Beginner foundations</span><span>Core communication</span></div><span class="french-level-open">OPEN EMERGENT COURSE ↗</span></button><button class="french-level-card" data-page="french-capable"><span class="french-level-tag">02 · ${frenchCourses.capable.phase}</span><h2>Capable–Proficient.</h2><p>Develop more complex language for culture, identity, sustainability, equality, technology and global issues.</p><div class="french-level-meta"><span>12 chapters</span><span>Independent communication</span><span>Advanced structures</span></div><span class="french-level-open">OPEN CAPABLE–PROFICIENT ↗</span></button></div><div class="course-footer-note">Choose the pathway that matches your class. The chapter material is original study content organised around the published textbook topic map; it is not copied from the textbooks.</div>`;}
-function frenchCourseMarkup(key){const c=frenchCourses[key];return `<div class="course-top"><button class="course-back" data-page="french">← All French courses</button><span class="eyebrow">${c.phase} · ${c.level.toUpperCase()}</span></div><h1>${c.title}.</h1><p class="intro course-intro">${c.subtitle}</p><div class="course-skill-strip"><span>LEARNING</span><span>VOCABULARY</span><span>GRAMMAR</span><span>CONJUGATION</span><span>READING</span><span>LISTENING</span><span>SPEAKING</span><span>REVISION</span></div><div class="rule"></div><div class="section-heading"><h2>6-UNIT CURRICULUM</h2><span>Open a chapter to study</span></div><div class="course-chapters">${c.chapters.map((ch,i)=>`<details class="course-chapter"><summary><span class="course-chapter-num">${String(i+1).padStart(2,"0")}</span><span><span class="course-chapter-title">${ch[0]}</span><span class="course-chapter-sub">${ch[1]}</span></span><span class="course-chapter-arrow">›</span></summary><div class="course-chapter-body"><div class="course-block"><h3>Vocabulary · Vocabulaire</h3><div class="course-vocab">${ch[2].map(v=>`<span><b>${v[0]}</b><span>${v[1]}</span></span>`).join("")}</div></div><div class="course-block"><h3>Grammar & conjugation · Grammaire</h3><p>${ch[3]}</p></div><div class="course-block"><h3>Useful expression</h3><p><strong>${ch[4]}</strong></p></div><div class="course-block"><h3>Reading · Lis</h3><p>${ch[5]}</p></div><div class="course-block"><h3>Speaking · Parle</h3><p>${ch[6]}</p><div class="course-actions"><button class="course-action" data-listen="${escapeHtml(ch[5])}">▶ Listen to passage</button><button class="course-action" data-speak="${escapeHtml(ch[6])}">🎙 Practise speaking</button></div><div class="course-feedback" aria-live="polite"></div></div><div class="course-block"><h3>Revision checkpoint</h3><p>Can you explain the chapter topic, use at least five vocabulary items, and apply the grammar focus in three original French sentences?</p></div></div></details>`).join("")}</div><div class="course-footer-note">Listening uses your browser's French text-to-speech voice when available. Speaking uses browser speech recognition where supported; microphone permission is required. If recognition is unavailable, practise aloud and use your device's voice typing instead.</div>`;}
-function frenchAudio(text,button){if(!("speechSynthesis" in window)){toastMessage("Audio playback is not supported in this browser.");return}window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang="fr-FR";utterance.rate=.88;window.speechSynthesis.speak(utterance);if(button){const old=button.textContent;button.textContent="Playing…";utterance.onend=()=>button.textContent=old;}}
-function frenchSpeak(button){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){const feedback=button.closest(".course-block").querySelector(".course-feedback");feedback.textContent="Speech recognition is not available in this browser. Try speaking aloud or use your device's French voice typing.";return}const recognition=new SR();recognition.lang="fr-FR";recognition.interimResults=false;recognition.maxAlternatives=1;const feedback=button.closest(".course-block").querySelector(".course-feedback");feedback.textContent="Listening… Speak in French when your browser asks for microphone access.";button.disabled=true;recognition.onresult=e=>{const said=e.results[0][0].transcript;feedback.textContent="You said: “"+said+"” — compare your response with the prompt and try to improve your pronunciation and sentence structure.";};recognition.onerror=e=>{feedback.textContent=e.error==="not-allowed"?"Microphone permission was blocked. Allow microphone access in your browser settings.":"Speech recognition stopped. Try again.";};recognition.onend=()=>button.disabled=false;try{recognition.start()}catch(e){button.disabled=false;feedback.textContent="Could not start the microphone. Try again.";}}
-
+function frenchMarkup(){return `<div class="eyebrow">LANGUAGE ACQUISITION · FRENCH</div><h1>French workspace.</h1><p class="intro">A general French study space, organised by the skills you need: vocabulary, conjugations, grammar and reading. Choose the level that matches your class.</p><div class="rule"></div><div class="french-level-grid"><button class="french-level-card" data-page="french-emergent"><span class="french-level-tag">01 · PHASES 1–2</span><h2>Emergent.</h2><p>Build your foundations with everyday vocabulary, essential verb forms, clear grammar and accessible reading.</p><div class="french-level-meta"><span>Beginner</span><span>Core language skills</span></div><span class="french-level-open">OPEN EMERGENT ↗</span></button><button class="french-level-card" data-page="french-capable"><span class="french-level-tag">02 · PHASES 3–6</span><h2>Capable–Proficient.</h2><p>Develop more precise vocabulary, advanced verb forms, complex grammar and longer reading passages.</p><div class="french-level-meta"><span>Intermediate–advanced</span><span>Extended language skills</span></div><span class="french-level-open">OPEN CAPABLE–PROFICIENT ↗</span></button></div>`}
+function frenchCourseMarkup(key){
+ const c=frenchCourses[key];
+ const vocabulary=[...new Map(c.chapters.flatMap(ch=>ch[2]).map(item=>[item[0],item])).values()];
+ const grammar=[...new Set(c.chapters.flatMap(ch=>ch[3].split(";").map(item=>item.trim()).filter(Boolean)))];
+ const readings=c.chapters.map((ch,i)=>({title:`Reading passage ${String(i+1).padStart(2,"0")}`,text:ch[5]}));
+ const conjugations=key==="emergent"?[
+  ["Être · to be","je suis · tu es · il/elle est · nous sommes · vous êtes · ils/elles sont"],
+  ["Avoir · to have","j'ai · tu as · il/elle a · nous avons · vous avez · ils/elles ont"],
+  ["Aller · to go","je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont"],
+  ["Regular -ER verbs · parler","je parle · tu parles · il/elle parle · nous parlons · vous parlez · ils/elles parlent"],
+  ["Reflexive verbs · se reposer","je me repose · tu te reposes · il/elle se repose · nous nous reposons · vous vous reposez · ils/elles se reposent"]
+ ]:[
+  ["Présent · parler","je parle · tu parles · il/elle parle · nous parlons · vous parlez · ils/elles parlent"],
+  ["Passé composé","j'ai parlé · tu as parlé · il/elle a parlé · nous avons parlé · vous avez parlé · ils/elles ont parlé"],
+  ["Imparfait","je parlais · tu parlais · il/elle parlait · nous parlions · vous parliez · ils/elles parlaient"],
+  ["Futur simple","je parlerai · tu parleras · il/elle parlera · nous parlerons · vous parlerez · ils/elles parleront"],
+  ["Conditionnel présent","je parlerais · tu parlerais · il/elle parlerait · nous parlerions · vous parleriez · ils/elles parleraient"],
+  ["Subjonctif présent","que je parle · que tu parles · qu'il/elle parle · que nous parlions · que vous parliez · qu'ils/elles parlent"]
+ ];
+ return `<div class="course-top"><button class="course-back" data-page="french">← French workspace</button><span class="eyebrow">${c.phase} · ${c.level.toUpperCase()}</span></div>
+ <h1>${c.title}.</h1><p class="intro course-intro">${c.subtitle}</p>
+ <div class="course-skill-strip"><span>VOCABULARY</span><span>CONJUGATIONS</span><span>GRAMMAR</span><span>READING</span></div>
+ <div class="rule"></div>
+ <div class="french-resource-grid">
+  <section class="french-resource"><div class="french-resource-head"><span class="french-resource-number">01</span><div><h2>Vocabulary · Vocabulaire</h2><p>Useful words and expressions, with their English meanings.</p></div></div><div class="french-vocab-grid">${vocabulary.map(v=>`<div class="french-vocab-item"><strong>${v[0]}</strong><span>${v[1]}</span></div>`).join("")}</div></section>
+  <section class="french-resource"><div class="french-resource-head"><span class="french-resource-number">02</span><div><h2>Conjugations · Conjugaison</h2><p>Verb forms and patterns to learn and practise.</p></div></div><div class="french-conjugation-list">${conjugations.map(v=>`<div class="french-conjugation-item"><strong>${v[0]}</strong><p>${v[1]}</p></div>`).join("")}</div></section>
+  <section class="french-resource"><div class="french-resource-head"><span class="french-resource-number">03</span><div><h2>Grammar · Grammaire</h2><p>Key grammar points for building accurate French sentences.</p></div></div><ul class="french-grammar-list">${grammar.map(item=>`<li>${item}</li>`).join("")}</ul></section>
+  <section class="french-resource"><div class="french-resource-head"><span class="french-resource-number">04</span><div><h2>Reading · Compréhension écrite</h2><p>Read each passage and focus on meaning, vocabulary and sentence structure.</p></div></div><div class="french-reading-list">${readings.map((r,i)=>`<article class="french-reading-item"><span class="french-reading-label">TEXT ${String(i+1).padStart(2,"0")}</span><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div></section>
+ </div>
+ <div class="course-footer-note">Listening and speaking activities can be added to this workspace later.</div>`;
+}
 const icons={learning:"▤",vocabulary:"Aa",conjugation:"↔",grammar:"¶",comprehension:"◉",revision:"⟳",notes:"▧","french-emergent":"A1","french-capable":"A2+"};
 const sidebar=document.getElementById("sidebar"),nav=document.getElementById("navigation"),content=document.getElementById("pageContent"),crumb=document.getElementById("crumb"),search=document.getElementById("search"),overlay=document.getElementById("overlay"),panel=document.getElementById("sidePanel"),toast=document.getElementById("toast");
 let toastTimer,currentPage="home",notes=loadNotes();
@@ -684,7 +760,7 @@ function wireNotes(){
 }
 function openPanel(title){document.getElementById("panelTitle").textContent=title;panel.classList.add("show");panel.setAttribute("aria-hidden","false");overlay.classList.add("show");document.getElementById("profileButton").setAttribute("aria-expanded","true")}
 function closePanel(){panel.classList.remove("show");panel.setAttribute("aria-hidden","true");overlay.classList.remove("show");document.getElementById("profileButton").setAttribute("aria-expanded","false")}
-nav.addEventListener("click",e=>{const link=e.target.closest(".nav-link[data-page]");if(link&&nav.contains(link))setPage(link.dataset.page)});content.addEventListener("click",e=>{const link=e.target.closest("[data-page]");if(link&&content.contains(link))setPage(link.dataset.page)});document.addEventListener("click",e=>{let listen=e.target.closest("[data-listen]");if(listen){frenchAudio(listen.dataset.listen,listen);return}let speak=e.target.closest("[data-speak]");if(speak)frenchSpeak(speak)});
+nav.addEventListener("click",e=>{const link=e.target.closest(".nav-link[data-page]");if(link&&nav.contains(link))setPage(link.dataset.page)});content.addEventListener("click",e=>{const link=e.target.closest("[data-page]");if(link&&content.contains(link))setPage(link.dataset.page)});
 document.getElementById("mobileMenu").addEventListener("click",()=>sidebar.classList.toggle("open"));document.getElementById("profileButton").addEventListener("click",()=>openPanel("My workspace"));document.getElementById("settingsButton").addEventListener("click",()=>openPanel("Settings"));document.getElementById("closePanel").addEventListener("click",closePanel);overlay.addEventListener("click",closePanel);document.addEventListener("keydown",e=>{if(e.key==="Escape"){closePanel();sidebar.classList.remove("open")}});
 document.getElementById("motionToggle").addEventListener("click",e=>{let b=e.currentTarget,on=b.getAttribute("aria-checked")!=="true";b.setAttribute("aria-checked",String(on));document.documentElement.classList.toggle("reduce-motion",on)});
 search.addEventListener("input",()=>{let q=search.value.trim().toLowerCase(),matches=0;nav.querySelectorAll(".nav-link").forEach(b=>{let ok=b.textContent.trim().toLowerCase().includes(q);b.hidden=!!q&&!ok;if(ok)matches++});if(q&&matches===0)toastMessage("No matching sections")});
