@@ -1,7 +1,7 @@
 "use strict";
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
 
 const source = fs.readFileSync(new URL("../ai.js", import.meta.url), "utf8");
 const sandbox = {window:{}};
