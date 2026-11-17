@@ -77,6 +77,9 @@ try {
     tenses: Object.fromEntries(window.MYP_FRENCH_EXPANSION.tenses.map(t => [t.key, window.frenchDecks["emconj-" + t.key].length]))
   }));
   if (deckSizes.vocab < 5000) throw new Error("French vocabulary should contain at least 5,000 cards.");
+  const vocabSearch = page.locator("[data-french-search=emvocab]");
+  await vocabSearch.fill("maison");
+  if (!(await page.locator("[data-deck-root=emvocab] .fd-card strong").textContent()).includes("maison")) throw new Error("Vocabulary search should find words without requiring their article.");
   if (deckSizes.verbs < 2500) throw new Error("French conjugations should cover at least 2,500 verbs.");
   if (Object.keys(deckSizes.tenses).length !== 5 || Object.values(deckSizes.tenses).some(n => n < 2500)) throw new Error("Each core tense should cover at least 2,500 verbs.");
   if (await page.locator(".conjugation-tense-block").count() !== 5) throw new Error("French conjugations should be separated into five tense sections.");
