@@ -20,7 +20,7 @@ test("generates a validated three-task French e-assessment paper", async () => {
   const paper={title:"La vie en ville",theme:"Identities and relationships",level:"Capable",listening:task,reading:task,writing:{stimulusTitle:"Affiche",stimulus:"Une affiche sur la vie locale.",task:"Écris un message.",audience:"Tes camarades",purpose:"Informer",wordTarget:"120–180 words",successCriteria:["Use clear paragraphs"]}};
   globalThis.fetch=async(url,options)=>{
     const request=JSON.parse(options.body);
-    assert.equal(request.response_format.type,"json_object");
+    assert.equal(request.response_format.type,"json_schema");\n    assert.equal(request.response_format.json_schema.strict,true);\n    assert.equal(request.response_format.json_schema.schema.additionalProperties,false);\n    assert.deepEqual(request.response_format.json_schema.schema.required,["title","theme","level","listening","reading","writing"]);
     assert.match(request.messages[1].content,/72 marks/);
     assert.match(request.messages[1].content,/three on-screen tasks/);
     return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(paper)}}]}),{status:200,headers:{"Content-Type":"application/json"}});
