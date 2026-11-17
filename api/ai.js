@@ -1,4 +1,4 @@
-// Vercel serverless function: secure Groq proxy for MYP Desk.
+// Shared Groq request handler used by the Render Node.js server.
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 const MAX_NOTES_CHARS = 50000;
