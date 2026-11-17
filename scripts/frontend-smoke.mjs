@@ -68,16 +68,6 @@ try {
   await page.getByText("Vocabulary", { exact: false }).first().waitFor();
   if (await page.locator("[data-listen]").count() !== 6) throw new Error("Listening controls are missing.");
   if (await page.locator("[data-speak]").count() !== 6) throw new Error("Speaking controls are missing.");
-  await page.addInitScript(() => {
-    const fake = {
-      cancel() {},
-      resume() {},
-      speak(utterance) { window.__spokenText = utterance.text; if (utterance.onstart) utterance.onstart(); if (utterance.onend) utterance.onend(); },
-      getVoices() { return [{ lang: "fr-FR", default: true }]; }
-    };
-    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: fake });
-    window.SpeechSynthesisUtterance = function(text) { this.text = text; };
-  });
   await page.locator('#navigation [data-page="french"]').click();
   await page.getByRole("heading", { name: "Choose your course." }).waitFor();
   await page.locator('#navigation [data-page="french-capable"]').click();
@@ -90,6 +80,7 @@ try {
     window.SpeechSynthesisUtterance=function(text){this.text=text;};
   });
   await audioPage.goto(pathToFileURL(process.cwd() + "/index.html").href);
+  await audioPage.locator('#navigation [data-page="french"]').click();
   await audioPage.locator('#navigation [data-page="french-emergent"]').click();
   await audioPage.locator(".course-chapter").first().locator("summary").click();
   const listenButton=audioPage.locator("[data-listen]").first();
