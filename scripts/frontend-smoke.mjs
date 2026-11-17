@@ -67,13 +67,23 @@ try {
     await page.getByRole("heading", { name: heading }).waitFor();
   }
   if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
-  if (await page.locator(".fd-card").count() !== 3) throw new Error("French workspace should render three flashcard decks.");
-  if (await page.locator(".fd-progress").count() !== 3) throw new Error("Each French flashcard deck should show progress.");
-  if (await page.locator(".grammar-lesson").count() < 40) throw new Error("French grammar should contain at least 40 expandable lessons.");
-  if (await page.locator(".grammar-example").count() < 40) throw new Error("Every grammar lesson should include a worked example and translation.");
-  const deckSizes = await page.evaluate(() => ({ vocab: window.frenchDecks.emvocab.length, conjugations: window.frenchDecks.emconjugation.length }));
-  if (deckSizes.vocab < 200) throw new Error("French vocabulary should contain at least 200 flashcards.");
-  if (deckSizes.conjugations < 600) throw new Error("French conjugations should contain at least 600 flashcards.");
+  if (await page.locator(".fd-card").count() !== 7) throw new Error("French workspace should render seven flashcard decks.");
+  if (await page.locator(".fd-progress").count() !== 7) throw new Error("Each French flashcard deck should show progress.");
+  if (await page.locator(".grammar-lesson").count() !== 50) throw new Error("French grammar should contain exactly 50 expandable lessons.");
+  if (await page.locator(".grammar-example").count() !== 50) throw new Error("Every grammar lesson should include a worked example and translation.");
+  const deckSizes = await page.evaluate(() => ({
+    vocab: window.frenchDecks.emvocab.length,
+    verbs: window.MYP_FRENCH_EXPANSION.verbs.length,
+    tenses: Object.fromEntries(window.MYP_FRENCH_EXPANSION.tenses.map(t => [t.key, window.frenchDecks["emconj-" + t.key].length]))
+  }));
+  if (deckSizes.vocab < 5000) throw new Error("French vocabulary should contain at least 5,000 cards.");
+  if (deckSizes.verbs < 2500) throw new Error("French conjugations should cover at least 2,500 verbs.");
+  if (Object.keys(deckSizes.tenses).length !== 5 || Object.values(deckSizes.tenses).some(n => n < 2500)) throw new Error("Each core tense should cover at least 2,500 verbs.");
+  if (await page.locator(".conjugation-tense-block").count() !== 5) throw new Error("French conjugations should be separated into five tense sections.");
+  const search = page.locator("[data-french-search=emconj-present]");
+  await search.fill("parler");
+  const conjugationAnswer = await page.locator("[data-deck-root=emconj-present] .fd-answer").textContent();
+  if (!conjugationAnswer.includes("je parle")) throw new Error("Present conjugation should show all subject forms.");
   if (await page.locator(".grammar-lesson-body > p").first().textContent().then(x => x.length) < 180) throw new Error("Grammar lessons should include full explanations.");
   if (await page.locator(".reading-ai").count() !== 1) throw new Error("French should show the AI Reading Studio.");
   if (await page.locator(".french-vocab-item, .french-reading-item").count() !== 0) throw new Error("Static vocabulary tiles and static reading passages should be removed.");
@@ -89,7 +99,7 @@ try {
   const spacing=await page.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
   if (parseFloat(spacing)<40) throw new Error("Study page spacing was not increased.");
   if (errors.length) throw new Error("Browser runtime errors: " + errors.join(" | "));
-  console.log("PASS: startup, subject navigation, French flashcard flipping and self-rating, grammar lessons, AI Reading Studio, responsive layout.");
+  console.log("PASS: startup, subject navigation, 5,000 vocabulary cards, 2,500+ verbs across five tenses, conjugation search, 50 grammar lessons, flashcards, AI Reading Studio, responsive layout.");
 } finally {
   await browser.close();
 }
