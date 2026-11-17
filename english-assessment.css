@@ -1,0 +1,72 @@
+/* ENGLISH E-ASSESSMENT WORKSPACE */
+.english-assessment{--eng-line:#303744;--eng-muted:#9ca5b3}
+.eng-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.eng-stat{padding:14px 16px;border:1px solid var(--eng-line);border-radius:11px;background:linear-gradient(145deg,#171c24,#11151b)}
+.eng-stat strong{display:block;font-size:19px;font-weight:600;letter-spacing:-.04em}
+.eng-stat span{display:block;margin-top:5px;color:#9aa3b0;font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.eng-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:24px 0 18px}
+.eng-tab{min-height:69px;padding:12px 14px;border:1px solid #303744;border-radius:10px;background:#11151b;color:#aeb6c2;text-align:left;cursor:pointer;transition:.18s}
+.eng-tab:hover{border-color:#687487;background:#171d27}
+.eng-tab.active{border-color:#8997aa;background:linear-gradient(140deg,#293443,#171e28);color:#fff;box-shadow:inset 0 0 0 1px #aab8ca18}
+.eng-tab span{display:block;font-size:9px;letter-spacing:.13em;color:#9da8b8;margin-bottom:7px}
+.eng-tab strong{font-size:12px;font-weight:650}
+.eng-panel{border:1px solid #303744;border-radius:13px;background:linear-gradient(150deg,#151a22,#101318);padding:21px}
+.eng-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:17px}
+.eng-panel-head h2{font-size:18px;letter-spacing:-.035em;margin:0 0 6px}
+.eng-panel-head p{font-size:11px;line-height:1.7;color:#9da6b3;margin:0;max-width:600px}
+.eng-tag{border:1px solid #485362;border-radius:20px;padding:6px 9px;font-size:8px;letter-spacing:.12em;color:#c0c8d3;white-space:nowrap}
+.eng-config{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:17px 0}
+.eng-config label{display:block;margin-bottom:7px;color:#aeb6c2;font-size:10px}
+.eng-config select,.eng-config input{width:100%;height:39px;padding:0 11px;border:1px solid #343d49;border-radius:8px;background:#0d1117;color:#e9edf2;font-size:11px}
+.eng-generate-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.eng-generate-row .btn{min-height:40px}
+.eng-note{font-size:10px;line-height:1.65;color:#7f8997}
+.eng-results{display:grid;gap:14px;margin-top:18px}
+.eng-paper-head{padding:18px;border:1px solid #394454;border-radius:11px;background:radial-gradient(ellipse at 100% 0%,#2a3442,#161c25 68%)}
+.eng-paper-head span{font-size:9px;letter-spacing:.14em;color:#aab8ca}
+.eng-paper-head h2{font-size:22px;letter-spacing:-.04em;margin:8px 0 5px}
+.eng-paper-head p{font-size:11px;color:#aab3c0;line-height:1.7;margin:0}
+.eng-task{border:1px solid #333d4a;border-radius:12px;background:#11161e;padding:18px;display:grid;gap:13px}
+.eng-task-top{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-bottom:11px;border-bottom:1px solid #ffffff14}
+.eng-task-top span{font-size:9px;letter-spacing:.13em;color:#aebbd0}
+.eng-task-top strong{font-size:10px;color:#e1d2aa;white-space:nowrap}
+.eng-task h3{font-size:16px;margin:0}
+.eng-instructions{font-size:11px;line-height:1.8;color:#c0c7d1;margin:0}
+.eng-source{border:1px solid #37404d;border-radius:9px;background:#171d26;padding:14px}
+.eng-source-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px}
+.eng-source-top strong{font-size:11px;color:#e6e9ee}
+.eng-source-top span{font-size:8px;letter-spacing:.12em;color:#aab5c4}
+.eng-source p{font:12px/1.9 Georgia,serif;color:#d6dbe3;white-space:pre-wrap;margin:0}
+.eng-question{padding:14px;border:1px solid #303945;border-radius:9px;background:#0f141b}
+.eng-question-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px}
+.eng-question-top span{font-size:9px;letter-spacing:.1em;color:#9eabbc}
+.eng-question-top strong{font-size:9px;color:#d7c69b;white-space:nowrap}
+.eng-question h4{font-size:12px;line-height:1.7;margin:0 0 10px;color:#eef0f4;font-weight:600}
+.eng-question textarea{width:100%;min-height:86px;resize:vertical;padding:11px;border:1px solid #343d49;border-radius:8px;background:#0b0f15;color:#f0f2f5;font:12px/1.8 Inter,sans-serif}
+.eng-question textarea:focus{outline:none;border-color:#78879a}
+.eng-question textarea::placeholder{color:#687383}
+.eng-question-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap}
+.eng-question-actions small{font-size:9px;color:#818c9b}
+.eng-feedback{margin-top:11px;padding:12px;border:1px solid #3b4655;border-radius:8px;background:#171e28;color:#d2d9e3;font-size:11px;line-height:1.8;white-space:pre-wrap}
+.eng-feedback strong{color:#f0dfb3}
+.eng-loading{padding:17px;border:1px dashed #455061;border-radius:9px;color:#aeb8c7;font-size:11px;line-height:1.7}
+.eng-empty{padding:24px;border:1px dashed #3b4654;border-radius:11px;text-align:center;color:#8993a1;font-size:11px;line-height:1.8}
+.eng-empty strong{display:block;color:#d7dce4;font-size:13px;margin-bottom:5px}
+@media(max-width:760px){.eng-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.eng-overview{gap:7px}.eng-stat{padding:12px}.eng-panel{padding:16px}}
+@media(max-width:520px){.eng-config{grid-template-columns:1fr}.eng-panel-head{display:block}.eng-tag{display:inline-block;margin-top:10px}.eng-task{padding:13px}.eng-overview{grid-template-columns:1fr 1fr}.eng-stat:last-child{grid-column:1/-1}}
+
+.eng-timer{padding:17px 18px;border:1px solid #48566a;border-radius:11px;background:linear-gradient(135deg,#1b2532,#121820);display:grid;gap:11px}
+.eng-timer-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.eng-timer-label{display:block;color:#aebbd0;font-size:9px;letter-spacing:.14em}
+.eng-timer-clock{font-size:29px;font-weight:650;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:#f2f4f7;margin:4px 0}
+.eng-timer-state{font-size:10px;color:#aab4c2}
+.eng-timer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.eng-timer-actions .btn{min-height:36px}
+.eng-timer-track{height:5px;background:#313d4c;border-radius:8px;overflow:hidden}
+.eng-timer-track span{display:block;height:100%;width:100%;background:#aab8ca;transition:width .3s linear}
+.eng-timer p{font-size:11px;line-height:1.65;color:#d0d7e1;margin:0}
+.eng-timer small{font-size:9px;color:#8e9aaa}
+.eng-timer.warning .eng-timer-clock{color:#e8c77f}
+.eng-timer.warning .eng-timer-track span{background:#d4ae64}
+.eng-timer.expired .eng-timer-clock{color:#e59b91}
+.eng-timer.expired .eng-timer-track span{background:#c7776e}
