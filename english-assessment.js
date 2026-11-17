@@ -42,7 +42,7 @@ function timerMarkup(){
  if(activeTab==="type1")split="Suggested split: 35 min for the four short responses, then 35 min for the extended comparison.";
  if(activeTab==="type2")split="Suggested time: 35 min for planning, writing and checking your literary text.";
  if(activeTab==="type3")split="Suggested time: 15 min for planning, writing and checking your non-literary text.";
- return '<div class="eng-timer" id="eng-timer"><div class="eng-timer-top"><div><span class="eng-timer-label">IB-STYLE SUGGESTED TIMING</span><div class="eng-timer-clock" id="eng-timer-clock">00:00:00</div><span class="eng-timer-state" id="eng-timer-state">Timer paused</span></div><div class="eng-timer-actions"><button type="button" class="btn" id="eng-timer-toggle">Start timer</button><button type="button" class="btn secondary" id="eng-timer-reset">Reset</button></div></div><div class="eng-timer-track"><span id="eng-timer-progress"></span></div><p>'+split+'</p><small>Approximate practice guidance, not a compulsory IB rule. The full paper remains 120 minutes.</small></div>';
+ return '<div class="eng-timer" id="eng-timer"><div class="eng-timer-top"><div><span class="eng-timer-label">IB-STYLE SUGGESTED TIMING</span><div class="eng-timer-clock" id="eng-timer-clock">'+formatTime(timerRemaining)+'</div><span class="eng-timer-state" id="eng-timer-state">Timer paused</span></div><div class="eng-timer-actions"><button type="button" class="btn" id="eng-timer-toggle">Start timer</button><button type="button" class="btn secondary" id="eng-timer-reset">Reset</button></div></div><div class="eng-timer-track"><span id="eng-timer-progress"></span></div><p>'+split+'</p><small>Approximate practice guidance, not a compulsory IB rule. The full paper remains 120 minutes.</small></div>';
 }
 function markup(){
  return `<div class="english-assessment">
@@ -87,7 +87,7 @@ function renderPaper(paper){
  html+=timerMarkup();
  paper.tasks.forEach((task,ti)=>{
  const typeKey=String(task.type||"").toLowerCase();
- const taskMinutes=typeKey.includes("analys")?70:typeKey.includes("literary")?35:15;
+ const taskMinutes=typeKey.includes("analys")?70:typeKey.includes("non-literary")?15:35;
  html+='<section class="eng-task"><div class="eng-task-top"><span>TASK '+escapeHTML(task.taskNumber)+' · '+escapeHTML(task.type.toUpperCase())+'</span><strong>'+Number(task.marks||0)+' MARKS · ~'+taskMinutes+' MIN</strong></div><h3>'+escapeHTML(task.title)+'</h3><p class="eng-instructions">'+escapeHTML(task.instructions)+'</p>';
  (task.sources||[]).forEach(source=>{html+=renderSource(source)});
  (task.questions||[]).forEach((q,qi)=>{html+=renderQuestion(q,ti,qi)});
