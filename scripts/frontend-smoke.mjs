@@ -4,13 +4,13 @@ import { chromium } from "playwright";
 import { pathToFileURL } from "node:url";
 
 const html = fs.readFileSync("index.html", "utf8");
-const inlineScripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
-  .filter(([, attrs]) => !/\\bsrc\\s*=/.test(attrs))
+const inlineScripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+  .filter(([, attrs]) => !/\bsrc\s*=/.test(attrs))
   .map(([, , code]) => code);
 if (!inlineScripts.length) throw new Error("No inline application script found.");
 for (const [index, code] of inlineScripts.entries()) {
   const check = spawnSync(process.execPath, ["--check"], { input: code, encoding: "utf8" });
-  if (check.status !== 0) throw new Error(`Inline script ${index + 1} failed syntax check:\\n${check.stderr}`);
+  if (check.status !== 0) throw new Error(`Inline script ${index + 1} failed syntax check:\n${check.stderr}`);
 }
 
 const browser = await chromium.launch({ headless: true });
