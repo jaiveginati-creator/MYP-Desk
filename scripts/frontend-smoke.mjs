@@ -54,7 +54,8 @@ try {
   ]) {
     await page.locator('#pageContent [data-page="' + target + '"]').click();
     await page.getByRole("heading", { name: heading }).waitFor();
-    await page.locator('#navigation [data-page="sciences"]').click();
+    await page.locator('#pageContent [data-page="subjects"]').click();
+    await page.locator('#pageContent [data-page="sciences"]').click();
   }
   await page.locator('#navigation [data-page="home"]').click();
   await page.locator("#pageContent .home-shell").waitFor();
