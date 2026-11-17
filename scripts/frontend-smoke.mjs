@@ -63,33 +63,19 @@ try {
   await page.getByRole("heading", { name: "Choose your course." }).waitFor();
   await page.locator('#navigation [data-page="french-emergent"]').click();
   await page.getByRole("heading", { name: "Emergent." }).waitFor();
-  if (await page.locator(".course-chapter").count() !== 6) throw new Error("Emergent course should show six units.");
-  await page.locator(".course-chapter").first().locator("summary").click();
-  await page.getByText("Vocabulary", { exact: false }).first().waitFor();
-  if (await page.locator("[data-listen]").count() !== 6) throw new Error("Listening controls are missing.");
-  if (await page.locator("[data-speak]").count() !== 6) throw new Error("Speaking controls are missing.");
-  await page.locator('#navigation [data-page="french"]').click();
-  await page.getByRole("heading", { name: "Choose your course." }).waitFor();
+  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire","Reading · Compréhension écrite"]) {
+    await page.getByRole("heading", { name: heading }).waitFor();
+  }
+  if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
+  if (await page.locator(".french-vocab-item").count() < 30) throw new Error("French vocabulary section should contain the combined vocabulary.");
+  if (await page.locator(".french-reading-item").count() !== 6) throw new Error("French reading section should contain all six passages.");
+  if (await page.locator("[data-listen], [data-speak]").count() !== 0) throw new Error("Listening and speaking should be deferred.");
   await page.locator('#navigation [data-page="french-capable"]').click();
   await page.getByRole("heading", { name: "Capable–Proficient." }).waitFor();
-  if (await page.locator(".course-chapter").count() !== 6) throw new Error("Capable–Proficient course should show six units.");
-  const audioPage = await browser.newPage();
-  await audioPage.addInitScript(() => {
-    const fake = { cancel(){}, resume(){}, speak(u){ window.__spokenText=u.text; if(u.onstart)u.onstart(); if(u.onend)u.onend(); }, getVoices(){ return [{lang:"fr-FR",default:true}]; } };
-    Object.defineProperty(window,"speechSynthesis",{configurable:true,value:fake});
-    window.SpeechSynthesisUtterance=function(text){this.text=text;};
-  });
-  await audioPage.goto(pathToFileURL(process.cwd() + "/index.html").href);
-  await audioPage.locator('#navigation [data-page="french"]').click();
-  await audioPage.locator('#navigation [data-page="french-emergent"]').click();
-  await audioPage.locator(".course-chapter").first().locator("summary").click();
-  const listenButton=audioPage.locator("[data-listen]").first();
-  await listenButton.click();
-  await audioPage.waitForFunction(() => Boolean(window.__spokenText));
-  if (!(await audioPage.evaluate(() => window.__spokenText)).length) throw new Error("Listen button did not send text to speech.");
-  const spacing=await audioPage.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
+  if (await page.locator(".french-resource").count() !== 4) throw new Error("Capable–Proficient should also have four general skill sections.");
+  if (await page.locator(".french-reading-item").count() !== 6) throw new Error("Capable–Proficient reading section should contain all six passages.");
+  const spacing=await page.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
   if (parseFloat(spacing)<40) throw new Error("Study page spacing was not increased.");
-  await audioPage.close();
   if (errors.length) throw new Error("Browser runtime errors: " + errors.join(" | "));
   console.log("PASS: startup, home subject cards, All Subjects cards, subject navigation, sidebar navigation, both six-unit French courses, listening/speaking controls.");
 } finally {
