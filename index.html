@@ -1040,7 +1040,7 @@ async function handleFrenchStudyClick(e){
    const utterance=new SpeechSynthesisUtterance(script);
    utterance.lang=voice?.lang||"fr-FR";
    if(voice)utterance.voice=voice;
-   utterance.rate=.9;utterance.pitch=1;
+   utterance.rate=currentPage==="french-emergent"?.5:.9;utterance.pitch=1;
    let failed=false,finished=false,startedAt=0;
    playListening.disabled=false;playListening.textContent="■ Stop listening";
    if(status)status.textContent=voice?"Starting French audio ("+voice.name+").":"Starting French audio with your device’s default voice.";
