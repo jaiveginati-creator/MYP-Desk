@@ -68,11 +68,37 @@ try {
   await page.getByText("Vocabulary", { exact: false }).first().waitFor();
   if (await page.locator("[data-listen]").count() !== 6) throw new Error("Listening controls are missing.");
   if (await page.locator("[data-speak]").count() !== 6) throw new Error("Speaking controls are missing.");
+  await page.addInitScript(() => {
+    const fake = {
+      cancel() {},
+      resume() {},
+      speak(utterance) { window.__spokenText = utterance.text; if (utterance.onstart) utterance.onstart(); if (utterance.onend) utterance.onend(); },
+      getVoices() { return [{ lang: "fr-FR", default: true }]; }
+    };
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: fake });
+    window.SpeechSynthesisUtterance = function(text) { this.text = text; };
+  });
   await page.locator('#navigation [data-page="french"]').click();
   await page.getByRole("heading", { name: "Choose your course." }).waitFor();
   await page.locator('#navigation [data-page="french-capable"]').click();
   await page.getByRole("heading", { name: "Capable–Proficient." }).waitFor();
   if (await page.locator(".course-chapter").count() !== 6) throw new Error("Capable–Proficient course should show six units.");
+  const audioPage = await browser.newPage();
+  await audioPage.addInitScript(() => {
+    const fake = { cancel(){}, resume(){}, speak(u){ window.__spokenText=u.text; if(u.onstart)u.onstart(); if(u.onend)u.onend(); }, getVoices(){ return [{lang:"fr-FR",default:true}]; } };
+    Object.defineProperty(window,"speechSynthesis",{configurable:true,value:fake});
+    window.SpeechSynthesisUtterance=function(text){this.text=text;};
+  });
+  await audioPage.goto(pathToFileURL(process.cwd() + "/index.html").href);
+  await audioPage.locator('#navigation [data-page="french-emergent"]').click();
+  await audioPage.locator(".course-chapter").first().locator("summary").click();
+  const listenButton=audioPage.locator("[data-listen]").first();
+  await listenButton.click();
+  await audioPage.waitForFunction(() => Boolean(window.__spokenText));
+  if (!(await audioPage.evaluate(() => window.__spokenText)).length) throw new Error("Listen button did not send text to speech.");
+  const spacing=await audioPage.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
+  if (parseFloat(spacing)<40) throw new Error("Study page spacing was not increased.");
+  await audioPage.close();
   if (errors.length) throw new Error("Browser runtime errors: " + errors.join(" | "));
   console.log("PASS: startup, home subject cards, All Subjects cards, subject navigation, sidebar navigation, both six-unit French courses, listening/speaking controls.");
 } finally {
