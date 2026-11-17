@@ -1025,41 +1025,35 @@ async function handleFrenchStudyClick(e){
  const playListening=e.target.closest("[data-play-ea-listening]");
  if(playListening){
   if(!activeEassessmentPaper)return;
-  const paperRoot=playListening.closest(".ea-paper"),transcript=paperRoot?.querySelector("[data-ea-transcript]"),status=paperRoot?.querySelector("[data-ea-audio-status]"),script=activeEassessmentPaper.listening.text;
+  const paperRoot=playListening.closest(".ea-paper"),transcript=paperRoot?.querySelector("[data-ea-transcript]"),status=paperRoot?.querySelector("[data-ea-audio-status]"),script=String(activeEassessmentPaper.listening?.text||"").trim();
   if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){if(transcript)transcript.hidden=false;if(status)status.textContent="This browser does not support spoken audio. The listening transcript is available below.";return}
   const synth=window.speechSynthesis;
   if(synth.speaking||synth.pending){synth.cancel();playListening.disabled=false;playListening.textContent="▶ Play listening";if(status)status.textContent="Playback stopped.";return}
-  // Queue every chunk in the original click gesture. Do not call cancel() here:
-  // cancelling an idle speech queue immediately before speak() can make some
-  // Chromium speech engines emit instant onend events without playing audio.
   try{
+   if(!script)throw new Error("The listening script is empty.");
    synth.resume();
    const voices=synth.getVoices();
    const frenchVoices=voices.filter(v=>/^fr(?:[-_]|$)/i.test(v.lang));
    const voice=frenchVoices.find(v=>/^fr[-_]FR$/i.test(v.lang))||frenchVoices.find(v=>/^fr[-_]CA$/i.test(v.lang))||frenchVoices[0]||null;
-   const sentences=String(script||"").match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[String(script||"")],chunks=[];let chunk="";
-   for(const sentence of sentences){const part=sentence.trim();if(!part)continue;if(chunk&&(chunk.length+part.length+1)>150){chunks.push(chunk);chunk=part}else chunk+=(chunk?" ":"")+part}
-   if(chunk)chunks.push(chunk);
-   if(!chunks.length)throw new Error("The listening script is empty.");
+   // Use one utterance for the entire passage. Queuing many utterances at once
+   // can be unreliable in some Chromium speech engines and may end prematurely.
+   const utterance=new SpeechSynthesisUtterance(script);
+   utterance.lang=voice?.lang||"fr-FR";
+   if(voice)utterance.voice=voice;
+   utterance.rate=.9;utterance.pitch=1;
    let failed=false,finished=false,startedAt=0;
    playListening.disabled=false;playListening.textContent="■ Stop listening";
    if(status)status.textContent=voice?"Starting French audio ("+voice.name+").":"Starting French audio with your device’s default voice.";
    const fail=(message)=>{if(failed||finished)return;failed=true;synth.cancel();if(transcript)transcript.hidden=false;playListening.disabled=false;playListening.textContent="▶ Try listening again";if(status)status.textContent=message};
-   chunks.forEach((part,index)=>{
-    const utterance=new SpeechSynthesisUtterance(part);
-    utterance.lang=voice?.lang||"fr-FR";
-    if(voice)utterance.voice=voice;
-    utterance.rate=.9;utterance.pitch=1;
-    utterance.onstart=()=>{if(!startedAt)startedAt=Date.now();if(status)status.textContent="Playing French listening audio…"};
-    utterance.onerror=(event)=>fail("Your browser could not play the audio ("+(event.error||"unknown error")+"). The transcript is shown below.");
-    if(index===chunks.length-1)utterance.onend=()=>{
-     if(failed||finished)return;
-     const expectedMinimum=Math.min(8000,Math.max(1800,Math.round(String(script).length/18*1000*.35)));
-     if(!startedAt||Date.now()-startedAt<expectedMinimum){fail("The browser ended audio before it was actually played. Try refreshing the page or using another browser; the transcript is shown below.");return}
-     finished=true;playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent="Listening finished. You can replay it.";
-    };
-    synth.speak(utterance);
-   });
+   utterance.onstart=()=>{startedAt=Date.now();if(status)status.textContent="Playing French listening audio…"};
+   utterance.onerror=(event)=>fail("Your browser could not play the audio ("+(event.error||"unknown error")+"). The transcript is shown below.");
+   utterance.onend=()=>{
+    if(failed||finished)return;
+    const expectedMinimum=Math.min(8000,Math.max(1800,Math.round(script.length/18*1000*.35)));
+    if(!startedAt||Date.now()-startedAt<expectedMinimum){fail("The browser ended audio before it was actually played. Try refreshing the page or using another browser; the transcript is shown below.");return}
+    finished=true;playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent="Listening finished. You can replay it.";
+   };
+   synth.speak(utterance);
   }catch(err){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio could not start: "+err.message;playListening.disabled=false;playListening.textContent="▶ Try listening again"}
   return;
  }
