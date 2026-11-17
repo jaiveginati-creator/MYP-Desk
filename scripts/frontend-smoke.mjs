@@ -57,6 +57,23 @@ try {
         await page.locator("[data-eng-tab=\"" + tab + "\"]").click();
         if (!(await page.locator("#eng-generate").isVisible())) throw new Error("Each English tab should provide an AI generation action.");
       }
+      const timingPreview = {
+        title:"Timed practice preview",theme:"Identities and relationships",durationMinutes:120,totalMarks:80,
+        tasks:[
+          {taskNumber:1,type:"Analysing",title:"Analysis",marks:30,instructions:"Complete the analysis.",sources:[],questions:[]},
+          {taskNumber:2,type:"Producing literary text",title:"Literary writing",marks:20,instructions:"Write creatively.",sources:[],questions:[]},
+          {taskNumber:3,type:"Producing non-literary text",title:"Non-literary writing",marks:30,instructions:"Write for an audience.",sources:[],questions:[]}
+        ]
+      };
+      await page.evaluate(paper => {
+        document.querySelector("#eng-results").innerHTML = window.EnglishAssessment.renderPaper(paper);
+      }, timingPreview);
+      if (!(await page.locator("#eng-timer-clock").isVisible())) throw new Error("English assessment should show a countdown timer.");
+      if (!(await page.locator("#eng-timer").textContent()).includes("35 min short responses + 35 min comparison")) throw new Error("Full-paper timer should show the recommended Task 1 timing split.");
+      await page.locator("#eng-timer-toggle").click();
+      if (await page.locator("#eng-timer-toggle").textContent() !== "Pause timer") throw new Error("Timer should start and switch to pause state.");
+      await page.locator("#eng-timer-reset").click();
+      if (await page.locator("#eng-timer-toggle").textContent() !== "Start timer") throw new Error("Timer reset should pause the countdown.");
     }
   }
   await page.locator('#navigation [data-page="subjects"]').click();
