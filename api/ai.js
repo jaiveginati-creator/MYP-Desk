@@ -51,6 +51,85 @@ function validateQuiz(data, requestedCount) {
 }
 
 
+const EASSESSMENT_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    theme: { type: "string" },
+    level: { type: "string" },
+    listening: {
+      type: "object",
+      properties: {
+        text: { type: "string" },
+        questions: { type: "array", items: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            options: { type: "array", items: { type: "string" } },
+            correctIndex: { type: "integer" },
+            explanation: { type: "string" }
+          },
+          required: ["question", "options", "correctIndex", "explanation"],
+          additionalProperties: false
+        } }
+      },
+      required: ["text", "questions"],
+      additionalProperties: false
+    },
+    reading: {
+      type: "object",
+      properties: {
+        text: { type: "string" },
+        questions: { type: "array", items: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            options: { type: "array", items: { type: "string" } },
+            correctIndex: { type: "integer" },
+            explanation: { type: "string" }
+          },
+          required: ["question", "options", "correctIndex", "explanation"],
+          additionalProperties: false
+        } }
+      },
+      required: ["text", "questions"],
+      additionalProperties: false
+    },
+    writing: {
+      type: "object",
+      properties: {
+        stimulusTitle: { type: "string" },
+        stimulus: { type: "string" },
+        task: { type: "string" },
+        audience: { type: "string" },
+        purpose: { type: "string" },
+        wordTarget: { type: "string" },
+        successCriteria: { type: "array", items: { type: "string" } }
+      },
+      required: ["stimulusTitle", "stimulus", "task", "audience", "purpose", "wordTarget", "successCriteria"],
+      additionalProperties: false
+    }
+  },
+  required: ["title", "theme", "level", "listening", "reading", "writing"],
+  additionalProperties: false
+};
+
+const EASSESSMENT_MARK_SCHEMA = {
+  type: "object",
+  properties: {
+    score: { type: "number" },
+    strengths: { type: "array", items: { type: "string" } },
+    improvements: { type: "array", items: { type: "string" } },
+    feedback: { type: "string" }
+  },
+  required: ["score", "strengths", "improvements", "feedback"],
+  additionalProperties: false
+};
+
+function strictJsonFormat(name, schema) {
+  return { type: "json_schema", json_schema: { name, strict: true, schema } };
+}
+
 function validateEassessment(data) {
   if (!data || typeof data !== "object") throw new Error("The AI returned an invalid practice paper.");
   const validateTask = (task, name) => {
@@ -152,7 +231,9 @@ Task: ${writingTask}
 Student response: ${response}
 Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short snippets if needed. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
     }
-    responseFormat = { type: "json_object" };
+    responseFormat = action === "eassessment"
+      ? strictJsonFormat("french_eassessment_paper", EASSESSMENT_SCHEMA)
+      : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
   if (action === "quiz") {
     const count = Math.max(1, Math.min(20, Number(body.count) || 10));
@@ -182,7 +263,8 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
         temperature: action === "quiz" ? 0.35 : ["reading","eassessment"].includes(action) ? 0.65 : action === "eassessment_mark" ? 0.25 : 0.55,
-        max_completion_tokens: action === "eassessment" ? 7500 : action === "eassessment_mark" ? 1800 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+        max_completion_tokens: action === "eassessment" ? 10000 : action === "eassessment_mark" ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+        ...(action === "eassessment" || action === "eassessment_mark" ? { reasoning_effort: "low" } : {}),
         ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
       })
