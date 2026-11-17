@@ -821,6 +821,7 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 @media(max-width:650px){.ea-controls,.ea-feedback-columns{grid-template-columns:1fr}.ea-task{padding:15px}.ea-options{grid-template-columns:1fr}.ea-paper-head{padding:17px}.ea-paper-head h3{font-size:20px}}
 
 </style>
+<link rel="stylesheet" href="english-assessment.css">
 </head>
 <body>
 <div class="app">
@@ -859,6 +860,7 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 <script src="api-config.js"></script>
 <script src="groq-client.js"></script>
 <script src="french-expansion.js"></script>
+<script src="english-assessment.js"></script>
 <script>
 (()=> {
 const labels={home:"Home",subjects:"All subjects",french:"French","french-emergent":"Emergent · Phases 1–2","french-capable":"Capable–Proficient · Phases 3–6","language-literature":"Language & Literature","individuals-societies":"Individuals & Societies",sciences:"Sciences",mathematics:"Mathematics",learning:"Learning",vocabulary:"Vocabulary",conjugation:"Conjugation",grammar:"Grammar",comprehension:"Comprehension",revision:"Revision",biology:"Biology",chemistry:"Chemistry",physics:"Physics",notes:"Notes & Quiz"};
@@ -1074,6 +1076,7 @@ function subjectsMarkup(){return `<div class="eyebrow">YOUR CURRICULUM</div><h1>
 function sciencesMarkup(){return `<div class="science-shell"><div class="science-kicker"><span class="eyebrow">MYP 4 & MYP 5 · SCIENCE DEPARTMENT</span><span class="science-index">03 DISCIPLINES <i></i> ONE WORKSPACE</span></div><div class="science-heading"><div><h1>Sciences<span>.</span></h1><p class="intro">Three disciplines. Three dedicated spaces. Choose where you want to work.</p></div><div class="science-orbit" aria-hidden="true"><span class="orbit-ring ring-a"></span><span class="orbit-ring ring-b"></span><span class="orbit-core">✳</span><i></i></div></div><div class="science-divider"><span>CHOOSE A DISCIPLINE</span><span>01 — 03</span></div><div class="science-grid"><button class="science-card science-biology" data-page="biology"><span class="science-card-top"><span>01 / LIFE SCIENCE</span><span class="science-card-arrow">↗</span></span><span class="science-art dna-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b>⌁</b></span><span class="science-card-title">Biology</span><span class="science-card-desc">Living systems, cells, organisms and the processes that connect them.</span><span class="science-card-bottom"><span>OPEN BIOLOGY</span><b>→</b></span></button><button class="science-card science-chemistry" data-page="chemistry"><span class="science-card-top"><span>02 / MATERIAL SCIENCE</span><span class="science-card-arrow">↗</span></span><span class="science-art molecule-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span><span class="science-card-title">Chemistry</span><span class="science-card-desc">Atoms, elements, compounds, reactions and the structure of matter.</span><span class="science-card-bottom"><span>OPEN CHEMISTRY</span><b>→</b></span></button><button class="science-card science-physics" data-page="physics"><span class="science-card-top"><span>03 / PHYSICAL SCIENCE</span><span class="science-card-arrow">↗</span></span><span class="science-art wave-art" aria-hidden="true"><i></i><i></i><i></i><b>∿</b></span><span class="science-card-title">Physics</span><span class="science-card-desc">Forces, energy, motion, waves and how the universe behaves.</span><span class="science-card-bottom"><span>OPEN PHYSICS</span><b>→</b></span></button></div><div class="science-footnote"><span>YOUR SCIENCE WORKSPACE</span><span>CONTENT WILL BE ADDED BY YOU</span></div></div>`}
 
 function subjectPageMarkup(page){
+ if(page==="language-literature"&&window.EnglishAssessment)return window.EnglishAssessment.markup();
  const descriptions={
   "language-literature":"Reading, writing, literary analysis, language and communication.",
   "individuals-societies":"History, geography, societies, systems and the world around us.",
@@ -1118,6 +1121,7 @@ function wireNotes(){
 function openPanel(title){document.getElementById("panelTitle").textContent=title;panel.classList.add("show");panel.setAttribute("aria-hidden","false");overlay.classList.add("show");document.getElementById("profileButton").setAttribute("aria-expanded","true")}
 function closePanel(){panel.classList.remove("show");panel.setAttribute("aria-hidden","true");overlay.classList.remove("show");document.getElementById("profileButton").setAttribute("aria-expanded","false")}
 content.addEventListener("click",handleFrenchStudyClick);
+content.addEventListener("click",e=>{if(window.EnglishAssessment)window.EnglishAssessment.handleClick(e)});
 content.addEventListener("input",handleFrenchStudyInput);
 nav.addEventListener("click",e=>{const link=e.target.closest(".nav-link[data-page]");if(link&&nav.contains(link))setPage(link.dataset.page)});content.addEventListener("click",e=>{const link=e.target.closest("[data-page]");if(link&&content.contains(link))setPage(link.dataset.page)});
 document.getElementById("mobileMenu").addEventListener("click",()=>sidebar.classList.toggle("open"));document.getElementById("profileButton").addEventListener("click",()=>openPanel("My workspace"));document.getElementById("settingsButton").addEventListener("click",()=>openPanel("Settings"));document.getElementById("closePanel").addEventListener("click",closePanel);overlay.addEventListener("click",closePanel);document.addEventListener("keydown",e=>{if(e.key==="Escape"){closePanel();sidebar.classList.remove("open")}});
