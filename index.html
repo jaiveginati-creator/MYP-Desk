@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090909">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0b0f">
 <meta name="description" content="MYP DESK — one organised workspace for your MYP 4 and MYP 5 subjects."><title>MYP DESK</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0b0f'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%23e6c87a' stroke-opacity='.45' stroke-width='2'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='32' fill='%23e6c87a' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400..750&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:dark;--bg:#090909;--surface:#101010;--surface2:#151515;--line:#292929;--text:#f3f3f3;--muted:#929292;--dim:#666;--sidebar:250px}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100vh}button,input,textarea,select{font:inherit}[hidden]{display:none!important}button{color:inherit}.app{min-height:100vh}
@@ -369,6 +373,150 @@ button:active{transform:scale(.99)}
 .ai-assistant{display:grid;gap:10px}.ai-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}.ai-heading .eyebrow{margin:0 0 7px}.ai-heading .panel-title{margin:0}.ai-prompt{min-height:78px;resize:vertical;line-height:1.6}.ai-result{display:flex;align-items:flex-start;gap:10px;min-height:92px;max-height:330px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;border:1px solid #343d4a;border-radius:10px;background:linear-gradient(145deg,#111720,#0c1016);color:#c3cbd7;font-size:11px;line-height:1.8}.ai-result-mark{flex:0 0 auto;color:#e1e6ef}.ai-result.loading{color:#aeb8c7}.ai-assistant .btn{width:100%}.ai-assistant .panel-copy{margin:0}.ai-assistant .eyebrow{font-size:8px}.quiz-config{margin-top:0}
 @media(max-width:650px){.ai-result{max-height:260px}}
 
+/* VISUAL SYSTEM V5 — THE EDITORIAL DESK · ivoire & antique gold on warm black */
+:root{--bg:#0a0b0f;--surface:#11131a;--surface2:#161922;--line:rgba(255,255,255,.07);--text:#f5f2ea;--muted:#a9a697;--dim:#6f6c60;--sidebar:262px;--accent:#e6c87a;--accent-soft:#e6c87a26;--accent-deep:#a8863d;--serif:"Fraunces",Georgia,"Times New Roman",serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+::selection{background:var(--accent);color:#141109}
+:focus-visible{outline:2px solid var(--accent)!important;outline-offset:3px}
+::-webkit-scrollbar-track{background:#0a0b0f}
+::-webkit-scrollbar-thumb{background:#2e2b23;border-color:#0a0b0f}
+::-webkit-scrollbar-thumb:hover{background:#4a463a}
+body{background:radial-gradient(1100px 620px at 82% -12%,rgba(230,200,122,.075),transparent 60%),radial-gradient(900px 700px at -12% 108%,rgba(122,146,196,.05),transparent 55%),var(--bg);letter-spacing:0}
+body:before{opacity:.1;background-image:linear-gradient(#ffffff0d 1px,transparent 1px),linear-gradient(90deg,#ffffff0d 1px,transparent 1px);background-size:72px 72px}
+body:after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-title,.overview-heading h2,.home-quote-card h2,.home-notes-card h2,.discipline-title-row h1,.science-heading h1,.hero-copy h1{font-family:var(--serif);font-optical-sizing:auto}
+.eyebrow{color:var(--accent);opacity:.9;letter-spacing:.24em}
+.intro{color:#b7b3a6}
+
+/* Sidebar — warm black glass with a gold active rail */
+.sidebar{background:linear-gradient(180deg,#0e0f13 0%,#0a0b0f 100%);border-right:1px solid rgba(230,200,122,.09);box-shadow:20px 0 60px #0006}
+.brand-mark{border:1px solid rgba(230,200,122,.4);background:radial-gradient(circle at 34% 28%,#3a3324,#17130a 78%);color:var(--accent);border-radius:12px;box-shadow:0 6px 24px #0009,inset 0 1px 0 #ffffff14}
+.brand-name{color:#efe9da;letter-spacing:.28em;font-weight:700}
+.nav-label{color:#7d7a6e;letter-spacing:.22em}
+.nav-group-label{border-top-color:rgba(230,200,122,.1)}
+.nav-link{color:#a3a091;border-radius:10px;transition:background .2s,color .2s,transform .2s}
+.nav-link .nav-icon{color:#8f8c7f}
+.nav-link:hover{background:rgba(230,200,122,.06);border-color:rgba(230,200,122,.14);color:#f5f2ea}
+.nav-link.active{background:linear-gradient(100deg,rgba(230,200,122,.14),rgba(230,200,122,.04));border-color:rgba(230,200,122,.25);color:#f8f5ec;box-shadow:inset 2.5px 0 var(--accent),0 6px 20px #0006}
+.nav-link.active .nav-icon{color:var(--accent)}
+.sidebar-note{border-color:rgba(230,200,122,.14);background:linear-gradient(150deg,#171510,#101010);color:#8f8c7f}
+.profile-button{border-color:rgba(255,255,255,.06)}
+.avatar{background:radial-gradient(circle at 34% 28%,#3f3826,#1a1710 80%);border-color:rgba(230,200,122,.35);color:var(--accent)}
+.profile-name{color:#e8e5d9}
+
+/* Topbar — calm sheen */
+.topbar{background:rgba(10,11,15,.78);border-bottom:1px solid rgba(230,200,122,.08)}
+.breadcrumb strong{color:#efece1}
+.search{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.09)}
+.search:focus{border-color:rgba(230,200,122,.55);background:rgba(230,200,122,.05);box-shadow:0 0 0 4px rgba(230,200,122,.08)}
+.icon-button{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.09);color:#b7b3a6}
+.icon-button:hover{background:rgba(230,200,122,.08);border-color:rgba(230,200,122,.3);color:var(--accent)}
+
+/* Buttons — the gold action */
+.btn{background:linear-gradient(180deg,#f6e9bd,#e6c87a 55%,#c8a557);border:1px solid #fff3c6aa;color:#221a0c;border-radius:11px;box-shadow:0 10px 26px rgba(230,200,122,.22),inset 0 1px 0 #fff8;letter-spacing:.02em}
+.btn:not(:disabled):hover{background:linear-gradient(180deg,#fff3cd,#eed48a 55%,#d4b166);transform:translateY(-1px);box-shadow:0 14px 32px rgba(230,200,122,.3),inset 0 1px 0 #fff9}
+.btn.secondary{background:rgba(255,255,255,.04);color:#d8d4c7;border-color:rgba(255,255,255,.12);box-shadow:none;backdrop-filter:blur(6px)}
+.btn.secondary:hover{background:rgba(230,200,122,.1);border-color:rgba(230,200,122,.3);color:var(--accent)}
+.hero-cta{background:linear-gradient(180deg,#f6e9bd,#e6c87a 55%,#c8a557);color:#221a0c;border:1px solid #fff6d0;border-radius:12px;box-shadow:0 14px 36px rgba(230,200,122,.28);letter-spacing:.04em}
+.hero-cta:hover{background:linear-gradient(180deg,#fff3cd,#eed48a);box-shadow:0 18px 44px rgba(230,200,122,.36)}
+
+/* Home hero — the cover of the desk journal */
+.home-hero{border:1px solid rgba(230,200,122,.17);border-radius:22px;background:radial-gradient(ellipse at 80% 40%,rgba(230,200,122,.16) 0,#1c1910 26%,#12110e 55%,#0c0d10 100%);box-shadow:0 35px 90px #0009,inset 0 1px 0 #ffffff10}
+.home-hero:before{border-color:rgba(230,200,122,.24);box-shadow:0 0 0 1px rgba(230,200,122,.06),0 0 0 38px rgba(230,200,122,.035),0 0 0 78px rgba(230,200,122,.025),0 0 0 120px rgba(230,200,122,.015)}
+.home-hero:after{background:radial-gradient(circle at 33% 28%,#f7e6b0,#c9a455 38%,#5d4a22 72%,#201a0d 100%);box-shadow:inset -34px -24px 60px #000c,0 0 95px rgba(230,200,122,.3)}
+.hero-copy h1{font-weight:480;letter-spacing:-.06em;color:#f8f6ee;text-shadow:0 4px 60px #000}
+.hero-copy h1 em{font-style:italic;font-weight:400;color:var(--accent)}
+.hero-description{color:#c3bfb1}
+.hero-index{border-color:rgba(230,200,122,.35);background:rgba(230,200,122,.08);color:#e9d9a6}
+.stamp-mark{border-color:rgba(230,200,122,.45);color:var(--accent);background:rgba(230,200,122,.07);box-shadow:0 0 35px rgba(230,200,122,.12)}
+.hero-bottom{border-top:1px solid rgba(230,200,122,.16);padding-top:16px;color:#a8a391}
+.home-footer,.page-footer{color:#7c796c}
+
+/* Overview & subject cards — one card language, gold hairline */
+.overview-grid{border-color:rgba(230,200,122,.14)}
+.overview-card{background:linear-gradient(155deg,#15171e 0%,#101116 100%);border-color:rgba(255,255,255,.05)}
+.overview-card:hover{background:linear-gradient(155deg,#1d1a13 0%,#131210 100%);border-color:rgba(230,200,122,.4);box-shadow:0 20px 44px #0008,0 0 0 1px rgba(230,200,122,.18)}
+.overview-card:after{background:linear-gradient(90deg,transparent,var(--accent),transparent)!important;opacity:0}
+.overview-card:hover:after{opacity:.8}
+.overview-card.overview-primary{background:linear-gradient(155deg,#201d13 0%,#14120c 100%);border-color:rgba(230,200,122,.3)}
+.overview-number{color:#8f8a77}
+.overview-icon{border-color:rgba(230,200,122,.3);background:rgba(230,200,122,.07);color:var(--accent);border-radius:11px}
+.overview-title{color:#f2efe4}
+.overview-desc{color:#9f9b8e}
+.overview-link{color:#dcc98d}
+.overview-caption{border-color:rgba(230,200,122,.22);color:#d8cf9f;background:rgba(230,200,122,.05)}
+.overview-heading h2{color:#f6f4ea}
+
+/* Science hub */
+.science-heading h1{color:#f8f6ee}
+.science-heading h1 span,.title-period{color:var(--accent)}
+.science-index i{background:var(--accent);box-shadow:0 0 14px rgba(230,200,122,.75)}
+.science-divider{border-top-color:rgba(230,200,122,.16);color:#8f8b7d}
+.science-card{background:linear-gradient(155deg,#171410 0%,#121110 55%,#0e0e10 100%);border-color:rgba(230,200,122,.16)}
+.science-card:hover{border-color:rgba(230,200,122,.45);box-shadow:0 26px 54px #000a,0 0 0 1px rgba(230,200,122,.16)}
+.orbit-core{border-color:rgba(230,200,122,.5);background:radial-gradient(circle at 36% 30%,#574b28,#1d1810 76%);color:var(--accent);box-shadow:0 0 50px rgba(230,200,122,.22)}
+.orbit-ring{border-color:rgba(230,200,122,.28)}
+.science-orbit i{background:var(--accent);box-shadow:0 0 18px rgba(230,200,122,.9)}
+.science-card-arrow{border-color:rgba(230,200,122,.3);color:var(--accent)}
+.science-card:hover .science-card-arrow{background:rgba(230,200,122,.14)}
+.science-card-title{color:#f5f2e8}
+.science-card-bottom{border-top-color:rgba(230,200,122,.14);color:#d8c98f}
+.science-art:before{border-color:rgba(230,200,122,.2);box-shadow:0 0 0 14px rgba(230,200,122,.03),0 0 50px rgba(230,200,122,.07)}
+
+/* Subject placeholders */
+.subject-placeholder{border-color:rgba(230,200,122,.18);background:radial-gradient(ellipse at 100% 0%,#211d12 0%,#151310 52%,#101010 100%)}
+.subject-placeholder-mark{border-color:rgba(230,200,122,.4);background:radial-gradient(circle at 36% 30%,#3d3520,#191510 76%);color:var(--accent)}
+.subject-placeholder h2{color:#f6f4ea}
+.subject-meta-grid{border-color:rgba(230,200,122,.16)}
+.subject-meta-grid span{color:#8f8b7c}
+.subject-meta-grid strong{color:#e9e5d7}
+
+/* Panels, fields, notes */
+.panel{background:linear-gradient(165deg,#15161c 0%,#101116 82%);border-color:rgba(230,200,122,.12);box-shadow:0 20px 50px #0005}
+.panel:before{background:linear-gradient(90deg,rgba(230,200,122,.4),transparent 65%)}
+.panel-title{color:#f2efe4}
+.panel-copy{color:#a09d90}
+.field,.notes-input{background:rgba(255,255,255,.028);border-color:rgba(255,255,255,.1);color:#f0ede2}
+.field:focus,.notes-input:focus{border-color:rgba(230,200,122,.55);background:rgba(230,200,122,.04);box-shadow:0 0 0 4px rgba(230,200,122,.09)}
+.field::placeholder,.notes-input::placeholder{color:#6f6c60}
+.note-item{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)}
+.note-item:hover{border-color:rgba(230,200,122,.3);background:rgba(230,200,122,.04)}
+.note-item input{accent-color:var(--accent)}
+.status{color:#c9c5b6}
+.badge-text{border-color:rgba(230,200,122,.4);color:var(--accent);background:rgba(230,200,122,.06)}
+.quiz-config{background:rgba(255,255,255,.028);border-color:rgba(255,255,255,.08)}
+
+/* Quiz — gold progress, considered feedback */
+.quiz-screen{border-color:rgba(230,200,122,.18);background:linear-gradient(155deg,#17150f,#100f0e);box-shadow:0 25px 60px #0007}
+.quiz-progress{background:#242014}
+.quiz-progress span{background:linear-gradient(90deg,#8a733a,#e6c87a,#fbf0c4);background-size:200% 100%;animation:gold-sheen 2.6s linear infinite}
+@keyframes gold-sheen{from{background-position:0% 0}to{background-position:200% 0}}
+.quiz-option{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1)}
+.quiz-option:hover{border-color:rgba(230,200,122,.45);background:rgba(230,200,122,.06)}
+.quiz-option.selected{border-color:var(--accent);background:rgba(230,200,122,.12);box-shadow:0 0 0 1px rgba(230,200,122,.35)}
+.quiz-option.selected .quiz-option-key{background:var(--accent);border-color:var(--accent);color:#221a0c}
+.quiz-option.correct{border-color:#3f7a52;background:#141f17}
+.quiz-option.incorrect{border-color:#8a4a3a;background:#221310}
+.quiz-option-key{border-color:rgba(230,200,122,.3);color:#d8c98f}
+.quiz-feedback{background:rgba(230,200,122,.05);border-color:rgba(230,200,122,.22)}
+.quiz-result-score{font-family:var(--serif);color:var(--accent)}
+.quiz-actions{border-top-color:rgba(230,200,122,.14)}
+
+/* AI assistant result */
+.ai-result{background:linear-gradient(160deg,rgba(230,200,122,.06),rgba(255,255,255,.02));border-color:rgba(230,200,122,.18);color:#d6d2c4}
+.ai-result-mark{color:var(--accent)}
+
+/* Empty states, footer, side panel, toast */
+.empty-panel{background:radial-gradient(ellipse at 50% 0%,#1d1a11,#121110 70%);border-color:rgba(230,200,122,.14)}
+.empty-symbol{border-color:rgba(230,200,122,.3);color:var(--accent);background:rgba(230,200,122,.05)}
+.empty-panel h2{color:#f3f0e4}
+.rule{background:linear-gradient(90deg,rgba(230,200,122,.5),rgba(230,200,122,.12) 60%,transparent)}
+.side-panel{background:rgba(13,14,17,.96);border-left-color:rgba(230,200,122,.14)}
+.panel-row strong{color:#efece0}
+.toggle[aria-checked=true]{background:var(--accent);border-color:var(--accent)}
+.toggle[aria-checked=true]:after{background:#221a0c}
+.toast{background:var(--accent);color:#221a0c;box-shadow:0 14px 40px rgba(230,200,122,.3)}
+:focus-visible{outline-color:var(--accent)!important}
+@media(prefers-reduced-motion:reduce){.quiz-progress span{animation:none!important}}
 </style>
 </head>
 <body>
@@ -405,7 +553,7 @@ button:active{transform:scale(.99)}
 <div class="panel-row"><strong>Profile</strong><p>Your personal MYP DESK workspace.</p></div>
 <div class="panel-row"><strong>Preferences</strong><p>Interface preferences will be available here.</p></div>
 <div class="panel-row toggle-row"><div><strong>Reduced motion</strong><p>Limit interface transitions.</p></div><button class="toggle" id="motionToggle" role="switch" aria-checked="false" aria-label="Reduced motion"></button></div>
-<div class="panel-row"><strong>Appearance</strong><p>Dark monochrome theme · Black and white</p></div>
+<div class="panel-row"><strong>Appearance</strong><p>Dark editorial theme · Ivory &amp; antique gold</p></div>
 </aside>
 <div class="toast" id="toast" role="status"></div>
 <script src="ai.js"></script>
