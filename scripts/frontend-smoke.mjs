@@ -22,6 +22,12 @@ for (const [index, code] of inlineScripts.entries()) {
   if (check.status !== 0) throw new Error(`Inline script ${index + 1} failed syntax check:\\n${check.stderr}`);
 }
 
+
+const apiSyntax = spawnSync(process.execPath, ["--check", "api/ai.js"], { encoding: "utf8" });
+if (apiSyntax.status !== 0) throw new Error("AI API failed syntax check:\\n" + apiSyntax.stderr);
+const apiTests = spawnSync(process.execPath, ["--test", "tests/eassessment-api.test.mjs"], { encoding: "utf8" });
+if (apiTests.status !== 0) throw new Error("E-assessment API tests failed:\\n" + apiTests.stdout + apiTests.stderr);
+
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
