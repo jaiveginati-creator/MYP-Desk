@@ -16,6 +16,9 @@
       const data = await request({ action, notes, prompt, subject, gradeLevel });
       return { text: data.text || "The AI returned an empty response.", provider: "groq", model: data.model };
     } catch (error) {
+      if (action === "explain" && (!Array.isArray(notes) || notes.length === 0)) {
+        return { text: "The online AI is currently unavailable, so I couldn't answer this standalone question. Please try again when the connection is back. (" + error.message + ")", provider: "unavailable" };
+      }
       const fallback = await local.askNotes({ notes, action, prompt });
       return { text: "GROQ IS CURRENTLY UNAVAILABLE — LOCAL NOTES MODE\n\n" + fallback.text + "\n\nCheck the Render API URL and server configuration. (" + error.message + ")", provider: "local-fallback" };
     }
