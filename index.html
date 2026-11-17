@@ -1026,30 +1026,41 @@ async function handleFrenchStudyClick(e){
  if(playListening){
   if(!activeEassessmentPaper)return;
   const paperRoot=playListening.closest(".ea-paper"),transcript=paperRoot?.querySelector("[data-ea-transcript]"),status=paperRoot?.querySelector("[data-ea-audio-status]"),script=activeEassessmentPaper.listening.text;
-  if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio playback is not supported in this browser. Use the listening transcript instead.";return}
+  if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){if(transcript)transcript.hidden=false;if(status)status.textContent="This browser does not support spoken audio. The listening transcript is available below.";return}
   const synth=window.speechSynthesis;
-  if(synth.speaking||synth.pending){synth.cancel();playListening.textContent="▶ Play listening";if(status)status.textContent="Playback stopped.";return}
-  playListening.disabled=true;playListening.textContent="Loading French voice…";if(status)status.textContent="Preparing French audio…";
+  if(synth.speaking||synth.pending){synth.cancel();playListening.disabled=false;playListening.textContent="▶ Play listening";if(status)status.textContent="Playback stopped.";return}
+  // Start speech synchronously inside the click gesture. Waiting for voiceschanged
+  // first can lose browser user activation and cause Chrome/Safari to remain silent.
   try{
-   let voices=synth.getVoices();
-   if(!voices.length)voices=await new Promise(resolve=>{let finished=false;const done=()=>{if(finished)return;finished=true;synth.removeEventListener("voiceschanged",changed);clearTimeout(timer);resolve(synth.getVoices())};const changed=()=>{if(synth.getVoices().length)done()};const timer=setTimeout(done,1800);synth.addEventListener("voiceschanged",changed);});
-   const frenchVoices=voices.filter(v=>/^fr(?:[-_]|$)/i.test(v.lang));
-   const voice=frenchVoices.find(v=>/^fr[-_]FR$/i.test(v.lang))||frenchVoices.find(v=>/^fr[-_]CA$/i.test(v.lang))||frenchVoices[0];
-   if(!voice){if(transcript)transcript.hidden=false;if(status)status.textContent="No French speech voice is available in this browser. The transcript is shown below; try enabling/downloading a French voice in your device’s speech settings.";playListening.textContent="▶ Play listening";playListening.disabled=false;return}
    synth.cancel();
-   const sentences=script.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[script],chunks=[];let chunk="";
-   for(const sentence of sentences){const part=sentence.trim();if(!part)continue;if(chunk&&(chunk.length+part.length+1)>180){chunks.push(chunk);chunk=part}else chunk+=(chunk?" ":"")+part}
+   synth.resume();
+   const voices=synth.getVoices();
+   const frenchVoices=voices.filter(v=>/^fr(?:[-_]|$)/i.test(v.lang));
+   const voice=frenchVoices.find(v=>/^fr[-_]FR$/i.test(v.lang))||frenchVoices.find(v=>/^fr[-_]CA$/i.test(v.lang))||frenchVoices[0]||null;
+   const sentences=String(script||"").match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[String(script||"")],chunks=[];let chunk="";
+   for(const sentence of sentences){const part=sentence.trim();if(!part)continue;if(chunk&&(chunk.length+part.length+1)>150){chunks.push(chunk);chunk=part}else chunk+=(chunk?" ":"")+part}
    if(chunk)chunks.push(chunk);
-   let index=0,failed=false;
+   if(!chunks.length)throw new Error("The listening script is empty.");
+   let index=0,failed=false,finished=false;
+   playListening.disabled=false;playListening.textContent="■ Stop listening";
+   if(status)status.textContent=voice?"Starting French audio ("+voice.name+").":"Starting French audio with your device’s default voice.";
+   const finish=(message)=>{if(finished)return;finished=true;playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent=message};
    const speakNext=()=>{
-    if(index>=chunks.length){playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent="Listening finished. You can replay it.";return}
-    const utterance=new SpeechSynthesisUtterance(chunks[index++]);utterance.voice=voice;utterance.lang=voice.lang||"fr-FR";utterance.rate=.88;utterance.pitch=1;
+    if(finished)return;
+    if(index>=chunks.length){finish("Listening finished. You can replay it.");return}
+    const utterance=new SpeechSynthesisUtterance(chunks[index++]);
+    utterance.lang=voice?.lang||"fr-FR";
+    if(voice)utterance.voice=voice;
+    utterance.rate=.9;utterance.pitch=1;
+    utterance.onstart=()=>{if(status)status.textContent="Playing French listening audio…"};
     utterance.onend=speakNext;
-    utterance.onerror=()=>{if(failed)return;failed=true;synth.cancel();if(transcript)transcript.hidden=false;if(status)status.textContent="The browser could not play the French audio. The transcript is shown below.";playListening.disabled=false;playListening.textContent="▶ Try listening again"};
+    utterance.onerror=(event)=>{if(failed||finished)return;failed=true;finished=true;synth.cancel();if(transcript)transcript.hidden=false;playListening.disabled=false;playListening.textContent="▶ Try listening again";if(status)status.textContent="Your browser stopped audio playback ("+(event.error||"unknown error")+"). The transcript is shown below."};
     synth.speak(utterance);
+    // Some Chromium builds pause speech after cancel(); resume on the next task
+    // without delaying the initial speak call or losing the click activation.
+    if(index===1)Promise.resolve().then(()=>{if(!finished&&synth.paused)synth.resume()});
    };
-   if(status)status.textContent="Playing in "+voice.name+" ("+voice.lang+").";
-   playListening.disabled=false;playListening.textContent="■ Stop listening";speakNext();
+   speakNext();
   }catch(err){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio could not start: "+err.message;playListening.disabled=false;playListening.textContent="▶ Try listening again"}
   return;
  }
