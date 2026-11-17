@@ -1029,10 +1029,10 @@ async function handleFrenchStudyClick(e){
   if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)){if(transcript)transcript.hidden=false;if(status)status.textContent="This browser does not support spoken audio. The listening transcript is available below.";return}
   const synth=window.speechSynthesis;
   if(synth.speaking||synth.pending){synth.cancel();playListening.disabled=false;playListening.textContent="▶ Play listening";if(status)status.textContent="Playback stopped.";return}
-  // Start speech synchronously inside the click gesture. Waiting for voiceschanged
-  // first can lose browser user activation and cause Chrome/Safari to remain silent.
+  // Queue every chunk in the original click gesture. Do not call cancel() here:
+  // cancelling an idle speech queue immediately before speak() can make some
+  // Chromium speech engines emit instant onend events without playing audio.
   try{
-   synth.cancel();
    synth.resume();
    const voices=synth.getVoices();
    const frenchVoices=voices.filter(v=>/^fr(?:[-_]|$)/i.test(v.lang));
@@ -1041,26 +1041,25 @@ async function handleFrenchStudyClick(e){
    for(const sentence of sentences){const part=sentence.trim();if(!part)continue;if(chunk&&(chunk.length+part.length+1)>150){chunks.push(chunk);chunk=part}else chunk+=(chunk?" ":"")+part}
    if(chunk)chunks.push(chunk);
    if(!chunks.length)throw new Error("The listening script is empty.");
-   let index=0,failed=false,finished=false;
+   let failed=false,finished=false,startedAt=0;
    playListening.disabled=false;playListening.textContent="■ Stop listening";
    if(status)status.textContent=voice?"Starting French audio ("+voice.name+").":"Starting French audio with your device’s default voice.";
-   const finish=(message)=>{if(finished)return;finished=true;playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent=message};
-   const speakNext=()=>{
-    if(finished)return;
-    if(index>=chunks.length){finish("Listening finished. You can replay it.");return}
-    const utterance=new SpeechSynthesisUtterance(chunks[index++]);
+   const fail=(message)=>{if(failed||finished)return;failed=true;synth.cancel();if(transcript)transcript.hidden=false;playListening.disabled=false;playListening.textContent="▶ Try listening again";if(status)status.textContent=message};
+   chunks.forEach((part,index)=>{
+    const utterance=new SpeechSynthesisUtterance(part);
     utterance.lang=voice?.lang||"fr-FR";
     if(voice)utterance.voice=voice;
     utterance.rate=.9;utterance.pitch=1;
-    utterance.onstart=()=>{if(status)status.textContent="Playing French listening audio…"};
-    utterance.onend=speakNext;
-    utterance.onerror=(event)=>{if(failed||finished)return;failed=true;finished=true;synth.cancel();if(transcript)transcript.hidden=false;playListening.disabled=false;playListening.textContent="▶ Try listening again";if(status)status.textContent="Your browser stopped audio playback ("+(event.error||"unknown error")+"). The transcript is shown below."};
+    utterance.onstart=()=>{if(!startedAt)startedAt=Date.now();if(status)status.textContent="Playing French listening audio…"};
+    utterance.onerror=(event)=>fail("Your browser could not play the audio ("+(event.error||"unknown error")+"). The transcript is shown below.");
+    if(index===chunks.length-1)utterance.onend=()=>{
+     if(failed||finished)return;
+     const expectedMinimum=Math.min(8000,Math.max(1800,Math.round(String(script).length/18*1000*.35)));
+     if(!startedAt||Date.now()-startedAt<expectedMinimum){fail("The browser ended audio before it was actually played. Try refreshing the page or using another browser; the transcript is shown below.");return}
+     finished=true;playListening.disabled=false;playListening.textContent="↻ Replay listening";if(status)status.textContent="Listening finished. You can replay it.";
+    };
     synth.speak(utterance);
-    // Some Chromium builds pause speech after cancel(); resume on the next task
-    // without delaying the initial speak call or losing the click activation.
-    if(index===1)Promise.resolve().then(()=>{if(!finished&&synth.paused)synth.resume()});
-   };
-   speakNext();
+   });
   }catch(err){if(transcript)transcript.hidden=false;if(status)status.textContent="Audio could not start: "+err.message;playListening.disabled=false;playListening.textContent="▶ Try listening again"}
   return;
  }
