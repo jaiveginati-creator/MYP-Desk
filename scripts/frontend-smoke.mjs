@@ -41,6 +41,7 @@ try {
   await page.locator('#navigation [data-page="subjects"]').click();
   await page.getByRole("heading", { name: "All subjects." }).waitFor();
   if (await page.locator("#pageContent .overview-card").count() !== 5) throw new Error("All Subjects page should render five subject cards.");
+  if (!(await page.locator('#navigation [data-page="language-literature"]').isVisible())) throw new Error("Sidebar should include Language & Literature.");
   for (const [target, heading] of [
     ["language-literature", "English e-assessment prep."],
     ["french", "French workspace."],
@@ -68,6 +69,7 @@ try {
       await page.evaluate(paper => {
         document.querySelector("#eng-results").innerHTML = window.EnglishAssessment.renderPaper(paper);
       }, timingPreview);
+      if (!(await page.locator("#eng-submit-all").isVisible())) throw new Error("A full assessment should provide one final submit-and-grade action.");
       if (!(await page.locator("#eng-timer-clock").isVisible())) throw new Error("English assessment should show a countdown timer.");
       if (!(await page.locator("#eng-timer").textContent()).includes("35 min short responses + 35 min comparison")) throw new Error("Full-paper timer should show the recommended Task 1 timing split.");
       await page.locator("#eng-timer-toggle").click();
