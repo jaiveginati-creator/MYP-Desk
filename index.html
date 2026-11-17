@@ -786,7 +786,7 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 .ea-task-head h3{font-size:17px;line-height:1.4;margin:5px 0 0;color:#f1eee8}
 .ea-task-head>strong{font-size:11px;color:#d8c99f;white-space:nowrap}
 .ea-task-instruction{font-size:12px;line-height:1.8;color:#bfc6d1;margin:0}
-.ea-playback-controls{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.ea-play{justify-self:start}.ea-speed-control{display:inline-flex;align-items:center;gap:5px}.ea-speed-control>span{font-size:10px;color:#8d96a5;margin-right:3px}.ea-speed-option{min-width:42px;padding:7px 9px;border:1px solid #343d4b;border-radius:7px;background:#171d27;color:#aeb7c5;font-size:10px;cursor:pointer;transition:background .15s,border-color .15s,color .15s}.ea-speed-option:hover{border-color:#7d8fa8;color:#fff}.ea-speed-option.active{background:#d8c99f;border-color:#d8c99f;color:#111722;font-weight:700}.ea-questions{display:grid;gap:11px}
+.ea-playback-controls{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.ea-play{justify-self:start}.ea-questions{display:grid;gap:11px}
 .ea-question{min-width:0;margin:0;padding:14px;border:1px solid #303743;border-radius:10px}
 .ea-question legend{padding:0 5px;font-size:12px;line-height:1.75;color:#eceef2;font-weight:600;max-width:100%}
 .ea-question legend span{color:#c9b47e;margin-right:4px}
@@ -981,7 +981,7 @@ let activeEassessmentPaper = null;
 function renderEassessmentPaper(paper,prefix){
  const questions=(task,key)=>task.questions.map((q,i)=>'<fieldset class="ea-question" data-ea-question data-ea-task="'+key+'" data-ea-index="'+i+'" data-correct-index="'+q.correctIndex+'"><legend><span>'+(i+1)+'.</span> '+frenchEscape(q.question)+'</legend><div class="ea-options">'+q.options.map((option,j)=>'<label><input type="radio" name="'+prefix+'-ea-'+key+'-'+i+'" value="'+j+'"><span>'+frenchEscape(option)+'</span></label>').join("")+'</div><div class="ea-question-feedback" aria-live="polite"></div></fieldset>').join("");
  return '<article class="ea-paper"><header class="ea-paper-head"><span>ORIGINAL PRACTICE PAPER · '+frenchEscape(paper.level)+'</span><h3>'+frenchEscape(paper.title)+'</h3><p>'+frenchEscape(paper.theme)+' · 72 marks</p></header>'+
- '<section class="ea-task"><div class="ea-task-head"><div><span>01 · CRITERION A</span><h3>Listening comprehension</h3></div><strong>24 marks</strong></div><p class="ea-task-instruction">Listen to the French audio and answer all six questions. You can replay it.</p><div class="ea-playback-controls"><button class="btn secondary ea-play" type="button" data-play-ea-listening>▶ Play listening</button><div class="ea-speed-control" role="group" aria-label="Listening playback speed"><span>Speed</span><button type="button" class="ea-speed-option" data-ea-speed="0.5" aria-pressed="false">0.5×</button><button type="button" class="ea-speed-option active" data-ea-speed="1" aria-pressed="true">1×</button><button type="button" class="ea-speed-option" data-ea-speed="2" aria-pressed="false">2×</button></div></div><p class="ea-audio-status" data-ea-audio-status aria-live="polite"></p><div class="ea-questions">'+questions(paper.listening,"listening")+'</div><div class="ea-transcript" data-ea-transcript hidden><strong>Listening transcript</strong><p>'+frenchEscape(paper.listening.text)+'</p></div></section>'+
+ '<section class="ea-task"><div class="ea-task-head"><div><span>01 · CRITERION A</span><h3>Listening comprehension</h3></div><strong>24 marks</strong></div><p class="ea-task-instruction">Listen to the French audio and answer all six questions. You can replay it.</p><div class="ea-playback-controls"><button class="btn secondary ea-play" type="button" data-play-ea-listening>▶ Play listening</button></div><p class="ea-audio-status" data-ea-audio-status aria-live="polite"></p><div class="ea-questions">'+questions(paper.listening,"listening")+'</div><div class="ea-transcript" data-ea-transcript hidden><strong>Listening transcript</strong><p>'+frenchEscape(paper.listening.text)+'</p></div></section>'+
  '<section class="ea-task"><div class="ea-task-head"><div><span>02 · CRITERION B</span><h3>Reading comprehension</h3></div><strong>24 marks</strong></div><div class="ea-reading-text">'+frenchEscape(paper.reading.text)+'</div><div class="ea-questions">'+questions(paper.reading,"reading")+'</div></section>'+
  '<section class="ea-task"><div class="ea-task-head"><div><span>03 · CRITERION D</span><h3>Writing in response to a text</h3></div><strong>24 marks</strong></div><div class="ea-stimulus"><span>'+frenchEscape(paper.writing.stimulusTitle)+'</span><p>'+frenchEscape(paper.writing.stimulus)+'</p></div><p class="ea-writing-task">'+frenchEscape(paper.writing.task)+'</p><div class="ea-writing-meta"><span>Audience: '+frenchEscape(paper.writing.audience)+'</span><span>Purpose: '+frenchEscape(paper.writing.purpose)+'</span><span>Suggested length: '+frenchEscape(paper.writing.wordTarget)+'</span></div><textarea class="field ea-writing-response" data-ea-writing-response rows="10" placeholder="Write your response in French here…"></textarea><button class="btn secondary ea-mark-writing" type="button" data-mark-ea-writing>Get AI feedback · /24</button><div class="ea-writing-feedback" data-ea-writing-feedback aria-live="polite"></div></section>'+
  '<div class="ea-submit-row"><button class="btn" type="button" data-submit-ea-objective>Mark listening + reading ↗</button><div class="ea-objective-result" data-ea-objective-result aria-live="polite"></div></div><p class="ea-disclaimer">Practice only — not an official IB examination or predicted grade. Listening playback uses your browser’s French speech voice.</p></article>';
@@ -1022,12 +1022,6 @@ async function handleFrenchStudyClick(e){
   finally{generatePaper.disabled=false;generatePaper.textContent="Generate a new practice paper ↗"}
   return;
  }
- const speedButton=e.target.closest("[data-ea-speed]");
- if(speedButton){
-  const paperRoot=speedButton.closest(".ea-paper");
-  if(paperRoot){paperRoot.dataset.eaSpeed=speedButton.dataset.eaSpeed;paperRoot.querySelectorAll("[data-ea-speed]").forEach(button=>{const selected=button===speedButton;button.classList.toggle("active",selected);button.setAttribute("aria-pressed",String(selected))});const status=paperRoot.querySelector("[data-ea-audio-status]");if(status)status.textContent="Playback speed set to "+speedButton.dataset.eaSpeed+"×."}
-  return;
- }
  const playListening=e.target.closest("[data-play-ea-listening]");
  if(playListening){
   if(!activeEassessmentPaper)return;
@@ -1046,7 +1040,7 @@ async function handleFrenchStudyClick(e){
    const utterance=new SpeechSynthesisUtterance(script);
    utterance.lang=voice?.lang||"fr-FR";
    if(voice)utterance.voice=voice;
-   utterance.rate=Number(paperRoot?.dataset.eaSpeed||"1");utterance.pitch=1;
+   utterance.rate=.9;utterance.pitch=1;
    let failed=false,finished=false,startedAt=0;
    playListening.disabled=false;playListening.textContent="■ Stop listening";
    if(status)status.textContent=voice?"Starting French audio ("+voice.name+").":"Starting French audio with your device’s default voice.";
