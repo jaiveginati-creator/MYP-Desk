@@ -35,7 +35,7 @@ try {
   if (await page.locator("#pageContent .overview-card").count() !== 5) throw new Error("All Subjects page should render five subject cards.");
   for (const [target, heading] of [
     ["language-literature", "Language & Literature."],
-    ["french", "Choose your course."],
+    ["french", "French workspace."],
     ["individuals-societies", "Individuals & Societies."],
     ["sciences", "Sciences."],
     ["mathematics", "Mathematics."]
