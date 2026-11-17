@@ -33,8 +33,29 @@ try {
   await page.locator('#navigation [data-page="subjects"]').click();
   await page.getByRole("heading", { name: "All subjects." }).waitFor();
   if (await page.locator("#pageContent .overview-card").count() !== 5) throw new Error("All Subjects page should render five subject cards.");
-  await page.locator('#pageContent [data-page="language-literature"]').click();
-  await page.getByRole("heading", { name: "Language & Literature." }).waitFor();
+  for (const [target, heading] of [
+    ["language-literature", "Language & Literature."],
+    ["french", "Choose your course."],
+    ["individuals-societies", "Individuals & Societies."],
+    ["sciences", "Sciences."],
+    ["mathematics", "Mathematics."]
+  ]) {
+    await page.locator('#navigation [data-page="subjects"]').click();
+    await page.locator('#pageContent [data-page="' + target + '"]').click();
+    await page.getByRole("heading", { name: heading }).waitFor();
+  }
+  await page.locator('#navigation [data-page="subjects"]').click();
+  await page.locator('#pageContent [data-page="sciences"]').click();
+  if (await page.locator(".science-card").count() !== 3) throw new Error("Science page should show Biology, Chemistry and Physics.");
+  for (const [target, heading] of [
+    ["biology", "Biology."],
+    ["chemistry", "Chemistry."],
+    ["physics", "Physics."]
+  ]) {
+    await page.locator('#pageContent [data-page="' + target + '"]').click();
+    await page.getByRole("heading", { name: heading }).waitFor();
+    await page.locator('#navigation [data-page="sciences"]').click();
+  }
   await page.locator('#navigation [data-page="home"]').click();
   await page.locator("#pageContent .home-shell").waitFor();
   await page.locator('#pageContent [data-page="french"]').click();
