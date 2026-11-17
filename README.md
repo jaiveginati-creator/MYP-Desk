@@ -14,6 +14,16 @@ Available tools:
 - Find the closest matching passages for a question
 - Generate multiple-choice, short-answer, or mixed quizzes with answers and explanations
 
+## Run the study-engine tests
+
+The study engine has a dependency-free Node.js test suite. From the repository root, run:
+
+```bash
+node --test tests/ai.test.mjs
+```
+
+The tests cover all assistant actions, note-grounded question matching, unknown questions, all quiz styles, answer-key consistency, and empty-input handling.
+
 ## Important limitation
 
 The local study engine uses text processing, keyword matching, sentence ranking, and definition detection. It is not a large language model and does not have human-like reasoning or general knowledge. Its answers are limited to the material students enter, and the quality of generated questions depends on clear, complete notes. It will say when it cannot find enough information rather than pretending to know.
