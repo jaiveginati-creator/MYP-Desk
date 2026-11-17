@@ -83,7 +83,7 @@ export default async function handler(req, res) {
   } else {
     const task = {
       explain: "Explain and reorganise the notes into clear sections. Define key terms and use examples only when they are accurate.",
-      summarise: "Summarise the most important ideas from the notes without losing essential meaning.",
+      summarise: "Write a clear, student-friendly summary in 3–5 connected paragraphs. Use complete sentences and natural transitions so it reads like a short textbook explanation. Start with a brief introduction to the topic, then explain the most important ideas in a logical order, keeping essential subject vocabulary and relationships accurate. Use ONLY information supported by the notes; do not add examples unless the notes include them. Do not use a title, headings, bullet points, numbered lists, tables, Q&A, or a quick-check section. Return plain paragraphs separated by a blank line.",
       flashcards: "Create useful question-and-answer revision flashcards from the notes.",
       "study-guide": "Create a structured study guide with key ideas, important terms, and self-check questions.",
       ask: `Answer the student's question: ${prompt}. Use the notes as the main evidence and say clearly if the notes do not contain the answer.`
