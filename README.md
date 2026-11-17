@@ -35,6 +35,20 @@ Privacy: notes remain in browser storage until the student uses the assistant or
 
 Never paste the API key into `index.html`, `ai.js`, `groq-client.js`, `api-config.js`, or GitHub. Store it only in Render Environment Variables.
 
+## Publishing changes
+
+Changes go live through `main`: pushes to `main` trigger an automatic GitHub Pages (frontend) and Render (backend) redeploy. Merging to `main` means shipping to production, so always confirm before merging.
+
+Recommended flow:
+
+1. Create a branch for the change (`git checkout -b <short-description>`).
+2. Make the edits, then run the tests: `node --test tests/ai.test.mjs`.
+3. Commit with a clear message and push the branch (`git push -u origin <branch>`).
+4. Open a pull request into `main` (`gh pr create`).
+5. Merge only after review/approval. GitHub Pages and Render redeploy automatically within a few minutes.
+
+The repo is public; never commit secrets. `GROQ_API_KEY` lives only in Render environment variables, and `api-config.js` should contain just the public `/api/ai` endpoint URL.
+
 ## Local study-engine tests
 
 The original browser-only study engine remains in `ai.js`. Run its dependency-free Node.js tests with:
