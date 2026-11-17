@@ -63,21 +63,28 @@ try {
   await page.getByRole("heading", { name: "French workspace." }).waitFor();
   await page.locator('#navigation [data-page="french-emergent"]').click();
   await page.getByRole("heading", { name: "Emergent." }).waitFor();
-  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire","Reading · Compréhension écrite"]) {
+  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire"]) {
     await page.getByRole("heading", { name: heading }).waitFor();
   }
   if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
-  if (await page.locator(".french-vocab-item").count() < 30) throw new Error("French vocabulary section should contain the combined vocabulary.");
-  if (await page.locator(".french-reading-item").count() !== 6) throw new Error("French reading section should contain all six passages.");
+  if (await page.locator(".fd-card").count() !== 3) throw new Error("French workspace should render three flashcard decks.");
+  if (await page.locator(".fd-progress").count() !== 3) throw new Error("Each French flashcard deck should show progress.");
+  if (await page.locator(".grammar-lesson").count() < 25) throw new Error("French grammar should contain at least 25 expandable lessons.");
+  if (await page.locator(".reading-ai").count() !== 1) throw new Error("French should show the AI Reading Studio.");
+  if (await page.locator(".french-vocab-item, .french-reading-item").count() !== 0) throw new Error("Static vocabulary tiles and static reading passages should be removed.");
+  await page.locator(".fd-card").first().click();
+  if (!(await page.locator(".fd-card").first().evaluate(el => el.classList.contains("flipped")))) throw new Error("Flashcard should flip to reveal its answer.");
+  await page.locator("[data-french-rate=known]").first().click();
+  if (!(await page.locator(".fd-progress").first().textContent()).includes("1 KNOWN")) throw new Error("Flashcard self-rating should update progress.");
   if (await page.locator("[data-listen], [data-speak]").count() !== 0) throw new Error("Listening and speaking should be deferred.");
   await page.locator('#navigation [data-page="french-capable"]').click();
   await page.getByRole("heading", { name: "Capable–Proficient." }).waitFor();
   if (await page.locator(".french-resource").count() !== 4) throw new Error("Capable–Proficient should also have four general skill sections.");
-  if (await page.locator(".french-reading-item").count() !== 6) throw new Error("Capable–Proficient reading section should contain all six passages.");
+  if (await page.locator(".reading-ai").count() !== 1) throw new Error("Capable–Proficient should also have an AI Reading Studio.");
   const spacing=await page.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
   if (parseFloat(spacing)<40) throw new Error("Study page spacing was not increased.");
   if (errors.length) throw new Error("Browser runtime errors: " + errors.join(" | "));
-  console.log("PASS: startup, home subject cards, All Subjects cards, subject navigation, sidebar navigation, both six-unit French courses, listening/speaking controls.");
+  console.log("PASS: startup, subject navigation, French flashcard flipping and self-rating, grammar lessons, AI Reading Studio, responsive layout.");
 } finally {
   await browser.close();
 }

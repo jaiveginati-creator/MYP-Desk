@@ -66,14 +66,14 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
   const prompt = cleanText(body.prompt, 3000);
-  if ((action === "ask" || action === "explain") && !prompt) return send(res, 400, { error: action === "ask" ? "Enter a question first." : "Enter a topic or question to explain." });
+  if ((action === "ask" || action === "explain" || action === "reading") && !prompt) return send(res, 400, { error: action === "ask" ? "Enter a question first." : "Enter a topic or question to explain." });
 
   const grade = cleanText(body.gradeLevel, 40) || "MYP 4–5";
   const subject = cleanText(body.subject, 100) || (notes.length ? "the subject represented by the notes" : "the student's selected subject");
@@ -96,6 +96,7 @@ export default async function handler(req, res) {
       summarise: "Write a clear, student-friendly summary in 3–5 connected paragraphs. Use ONLY facts explicitly stated in the notes. Do not add definitions, examples, locations, structures, functions, processes, or background facts absent from the notes. Do not infer extra details from general knowledge. Preserve meaning while combining related points and removing repetition. Use complete sentences and natural transitions. No title, headings, bullets, numbered lists, tables, Q&A, or quick-check section. Return plain paragraphs separated by blank lines.",
       flashcards: "Create 8–12 useful revision flashcards using ONLY facts explicitly stated in the notes. Each card MUST use exactly three lines: CARD 1 on its own line; Q: followed by one question on its own line; A: followed by a concise complete answer on its own line. Put one completely blank line between cards. Never put two cards or Q and A on the same line. Cover important ideas, avoid duplicates, and add no introduction, conclusion, outside facts, or quiz.",
       "study-guide": "Create a polished study guide using ONLY facts explicitly stated in the notes. Use these sections in order when supported: OVERVIEW (2 short sentences introducing only the stated topic), KEY IDEAS (concise bullets restating key facts), IMPORTANT TERMS (only terms appearing in the notes; definitions must use only supported information), HOW IT CONNECTS (only relationships or processes explicitly described in the notes; if none, say the notes do not explain further connections), and CHECK YOUR UNDERSTANDING (4–6 questions answerable directly from the notes). Do not introduce new structures, mechanisms, examples, or scientific facts. Do not expand simple notes into advanced definitions.",
+      reading: `Create an original French reading exercise for an ${grade} student. Follow the requested topic and CEFR level exactly. Include a suitable French passage, a short vocabulary list with English meanings, six comprehension questions in French, and a clearly separated answer key in English. Keep the passage age-appropriate and grammatically accurate. User request: ${prompt}. No invented citations or references.`,
       ask: notes.length
         ? `Answer this question for an ${grade} student: ${prompt}. Start with a direct answer in 1–2 sentences, then add at most one short paragraph explaining the connection. Aim for 60–120 words unless genuinely necessary. Use only information explicitly supported by the notes. If the notes do not contain enough information, say so briefly; do not fill gaps with outside facts. Avoid repetition. No title, bullets, numbered lists, or tables.`
         : `Answer this question for an ${grade} student using reliable general knowledge: ${prompt}. Start with a direct answer, then give at most one short paragraph of explanation. Aim for 60–120 words unless genuinely necessary. Define only necessary terms and avoid repetition. No title, bullets, numbered lists, or tables.`
@@ -109,8 +110,8 @@ export default async function handler(req, res) {
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-        temperature: action === "quiz" ? 0.35 : 0.55,
-        max_completion_tokens: action === "quiz" ? 5000 : 3000,
+        temperature: action === "quiz" ? 0.35 : action === "reading" ? 0.65 : 0.55,
+        max_completion_tokens: action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
         ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
       })
