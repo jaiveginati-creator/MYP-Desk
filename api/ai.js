@@ -166,7 +166,7 @@ function validateEnglishTask(task,rule,index){
   if(rule==="analysing"&&(questions.slice(0,4).reduce((sum,q)=>sum+q.marks,0)!==10||questions[4].marks!==20||questions.slice(0,4).some(q=>q.responseType!=="short")||questions[4].responseType!=="extended"))throw new Error("The analysing task must have four short-response questions worth 10 marks and one 20-mark extended comparison.");
   const sources=task.sources.map(source=>({title:String(source&&source.title||"Source").slice(0,180),format:String(source&&source.format||"Text").slice(0,80),content:String(source&&source.content||"").trim().slice(0,10000)}));
   if(sources.some(source=>!source.content))throw new Error("An English source is empty.");
-  return {taskNumber:index+1,type:String(task.type||rule).slice(0,60),title:String(task.title||"Task "+(index+1)).slice(0,180),marks:expectedMarks,instructions:String(task.instructions||"").slice(0,1600),sources,questions};
+  return {taskNumber:index+1,type:ENGLISH_TYPE_LABEL[rule],title:String(task.title||"Task "+(index+1)).slice(0,180),marks:expectedMarks,instructions:String(task.instructions||"").slice(0,1600),sources,questions};
 }
 function assembleEnglishPaper(tasks,requestedType,theme){
   const full=requestedType==="full";
