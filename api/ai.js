@@ -174,7 +174,7 @@ function validateEnglishPaper(data,requestedType){
   });
   const total=tasks.reduce((sum,task)=>sum+task.marks,0);
   if(Number(data.totalMarks)!==total||total!==(full?80:taskRules[0]==="literary"?20:taskRules[0]==="analysing"?30:30))throw new Error("The English paper mark total is incorrect.");
-  return {title:String(data.title||"English practice assessment").slice(0,180),theme:String(data.theme||"").slice(0,120),taskType:requestedType,durationMinutes:full?120:taskRules[0]==="analysing"?45:taskRules[0]==="literary"?30:45,totalMarks:total,tasks};
+  return {title:String(data.title||"English practice assessment").slice(0,180),theme:String(data.theme||"").slice(0,120),taskType:requestedType,durationMinutes:full?120:taskRules[0]==="analysing"?70:taskRules[0]==="literary"?35:15,totalMarks:total,tasks};
 }
 function validateEnglishMark(data,maxMarks){
   if(!data||!Number.isFinite(Number(data.score)))throw new Error("The AI returned invalid English feedback.");
