@@ -556,6 +556,37 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 .course-feedback{font-size:10px;color:#b9c2ce;line-height:1.6;margin-top:9px;min-height:16px}
 .course-footer-note{font-size:10px;color:#858d9a;line-height:1.7;margin-top:22px;padding:14px;border:1px solid #303743;border-radius:9px}
 @media(max-width:750px){.french-level-grid,.course-chapters{grid-template-columns:1fr}.course-top{display:block}.course-back{margin-bottom:18px}}
+
+/* SPACING PASS — clearer rhythm and room to study */
+.content{padding:54px clamp(28px,4vw,58px) 76px}
+.content>.rule{margin:38px 0 30px}
+.intro{max-width:690px;line-height:1.85;margin-top:16px}
+.section-heading{margin-bottom:20px}
+.quick-grid{gap:16px}
+.quick-card{min-height:132px;padding:21px}
+.nav{gap:7px}
+.nav-link{min-height:44px}
+.home-overview{margin-top:58px}
+.overview-heading{margin-bottom:22px}
+.overview-grid{row-gap:0}
+.overview-card{padding:21px;min-height:194px}
+.home-bottom-grid{gap:18px;margin-top:20px}
+.home-notes-card,.home-quote-card{padding:26px}
+.subject-placeholder{padding:38px;gap:30px}
+.subject-meta-grid>div{padding:21px}
+.course-chapters{gap:14px}
+.course-chapter summary{padding:20px;gap:14px}
+.course-chapter-body{padding:24px}
+.course-block{margin-bottom:24px}
+.course-block h3{margin-bottom:11px}
+.course-block p{font-size:12px;line-height:1.9}
+.course-vocab{gap:10px}
+.course-vocab span{padding:11px 13px;line-height:1.5}
+.course-actions{gap:10px;margin-top:17px}
+.course-action{padding:11px 14px}
+.course-footer-note{margin-top:28px;padding:17px}
+@media(max-width:1000px){.content{padding:42px 28px 60px}.home-overview{margin-top:44px}}
+@media(max-width:650px){.content{padding:34px 17px 48px}.content>.rule{margin:29px 0 23px}.quick-grid{gap:11px}.quick-card{min-height:112px;padding:17px}.overview-card{padding:14px;min-height:166px}.home-bottom-grid{gap:12px}.home-notes-card,.home-quote-card{padding:19px}.subject-placeholder{padding:22px}.course-chapter summary{padding:16px;gap:10px}.course-chapter-body{padding:17px}.course-block{margin-bottom:20px}.course-vocab{grid-template-columns:1fr;gap:7px}}
 </style>
 </head>
 <body>
@@ -626,7 +657,26 @@ const frenchCourses={
 };
 function frenchMarkup(){return `<div class="eyebrow">LANGUAGE ACQUISITION · FRENCH</div><h1>Choose your course.</h1><p class="intro">Two pathways for the six units in your French course. Both courses cover the same six units, with different levels of difficulty and depth.</p><div class="rule"></div><div class="french-level-grid"><button class="french-level-card" data-page="french-emergent"><span class="french-level-tag">01 · ${frenchCourses.emergent.phase}</span><h2>Emergent.</h2><p>Build confidence with everyday French: introductions, school, food, hobbies, travel and familiar situations.</p><div class="french-level-meta"><span>6 units</span><span>Beginner foundations</span><span>Core communication</span></div><span class="french-level-open">OPEN EMERGENT COURSE ↗</span></button><button class="french-level-card" data-page="french-capable"><span class="french-level-tag">02 · ${frenchCourses.capable.phase}</span><h2>Capable–Proficient.</h2><p>Develop more complex language for culture, identity, sustainability, equality, technology and global issues.</p><div class="french-level-meta"><span>12 chapters</span><span>Independent communication</span><span>Advanced structures</span></div><span class="french-level-open">OPEN CAPABLE–PROFICIENT ↗</span></button></div><div class="course-footer-note">Choose the pathway that matches your class. The chapter material is original study content organised around the published textbook topic map; it is not copied from the textbooks.</div>`;}
 function frenchCourseMarkup(key){const c=frenchCourses[key];return `<div class="course-top"><button class="course-back" data-page="french">← All French courses</button><span class="eyebrow">${c.phase} · ${c.level.toUpperCase()}</span></div><h1>${c.title}.</h1><p class="intro course-intro">${c.subtitle}</p><div class="course-skill-strip"><span>LEARNING</span><span>VOCABULARY</span><span>GRAMMAR</span><span>CONJUGATION</span><span>READING</span><span>LISTENING</span><span>SPEAKING</span><span>REVISION</span></div><div class="rule"></div><div class="section-heading"><h2>6-UNIT CURRICULUM</h2><span>Open a chapter to study</span></div><div class="course-chapters">${c.chapters.map((ch,i)=>`<details class="course-chapter"><summary><span class="course-chapter-num">${String(i+1).padStart(2,"0")}</span><span><span class="course-chapter-title">${ch[0]}</span><span class="course-chapter-sub">${ch[1]}</span></span><span class="course-chapter-arrow">›</span></summary><div class="course-chapter-body"><div class="course-block"><h3>Vocabulary · Vocabulaire</h3><div class="course-vocab">${ch[2].map(v=>`<span><b>${v[0]}</b><span>${v[1]}</span></span>`).join("")}</div></div><div class="course-block"><h3>Grammar & conjugation · Grammaire</h3><p>${ch[3]}</p></div><div class="course-block"><h3>Useful expression</h3><p><strong>${ch[4]}</strong></p></div><div class="course-block"><h3>Reading · Lis</h3><p>${ch[5]}</p></div><div class="course-block"><h3>Speaking · Parle</h3><p>${ch[6]}</p><div class="course-actions"><button class="course-action" data-listen="${escapeHtml(ch[5])}">▶ Listen to passage</button><button class="course-action" data-speak="${escapeHtml(ch[6])}">🎙 Practise speaking</button></div><div class="course-feedback" aria-live="polite"></div></div><div class="course-block"><h3>Revision checkpoint</h3><p>Can you explain the chapter topic, use at least five vocabulary items, and apply the grammar focus in three original French sentences?</p></div></div></details>`).join("")}</div><div class="course-footer-note">Listening uses your browser's French text-to-speech voice when available. Speaking uses browser speech recognition where supported; microphone permission is required. If recognition is unavailable, practise aloud and use your device's voice typing instead.</div>`;}
-function frenchAudio(text,button){if(!("speechSynthesis" in window)){toastMessage("Audio playback is not supported in this browser.");return}window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang="fr-FR";utterance.rate=.88;window.speechSynthesis.speak(utterance);if(button){const old=button.textContent;button.textContent="Playing…";utterance.onend=()=>button.textContent=old;}}
+function frenchAudio(text,button){
+ const synth=window.speechSynthesis;
+ if(!synth||typeof window.SpeechSynthesisUtterance!=="function"){toastMessage("This browser does not support French audio playback.");return}
+ synth.cancel();
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.lang="fr-FR";utterance.rate=.88;
+ const original=button?button.textContent:"";
+ if(button){button.textContent="Preparing audio…";button.disabled=true}
+ utterance.onstart=()=>{if(button)button.textContent="Playing…"};
+ utterance.onend=()=>{if(button){button.textContent=original;button.disabled=false}};
+ utterance.onerror=()=>{if(button){button.textContent=original;button.disabled=false}toastMessage("Audio could not start. Check your device's sound and try again.")};
+ const chooseVoice=()=>{const voices=synth.getVoices?synth.getVoices():[];return voices.find(v=>/^fr(-|$)/i.test(v.lang||""))||voices.find(v=>v.default)||null};
+ const voice=chooseVoice();
+ if(voice)utterance.voice=voice;
+ if(voice||!synth.addEventListener){synth.resume();synth.speak(utterance);return}
+ let started=false;
+ const start=()=>{if(started)return;started=true;synth.removeEventListener?.("voiceschanged",start);const available=chooseVoice();if(available)utterance.voice=available;synth.resume();synth.speak(utterance)};
+ synth.addEventListener("voiceschanged",start,{once:true});
+ setTimeout(start,1200);
+}
 function frenchSpeak(button){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){const feedback=button.closest(".course-block").querySelector(".course-feedback");feedback.textContent="Speech recognition is not available in this browser. Try speaking aloud or use your device's French voice typing.";return}const recognition=new SR();recognition.lang="fr-FR";recognition.interimResults=false;recognition.maxAlternatives=1;const feedback=button.closest(".course-block").querySelector(".course-feedback");feedback.textContent="Listening… Speak in French when your browser asks for microphone access.";button.disabled=true;recognition.onresult=e=>{const said=e.results[0][0].transcript;feedback.textContent="You said: “"+said+"” — compare your response with the prompt and try to improve your pronunciation and sentence structure.";};recognition.onerror=e=>{feedback.textContent=e.error==="not-allowed"?"Microphone permission was blocked. Allow microphone access in your browser settings.":"Speech recognition stopped. Try again.";};recognition.onend=()=>button.disabled=false;try{recognition.start()}catch(e){button.disabled=false;feedback.textContent="Could not start the microphone. Try again.";}}
 
 const icons={learning:"▤",vocabulary:"Aa",conjugation:"↔",grammar:"¶",comprehension:"◉",revision:"⟳",notes:"▧","french-emergent":"A1","french-capable":"A2+"};
