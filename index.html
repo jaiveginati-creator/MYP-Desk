@@ -700,7 +700,7 @@ function frenchCourseMarkup(key){
  aller:{présent:["vais","vas","va","allons","allez","vont"],"passé composé":["suis allé(e)","es allé(e)","est allé(e)","sommes allé(e)s","êtes allé(e)(s)","sont allé(e)s"],imparfait:["allais","allais","allait","allions","alliez","allaient"],"futur simple":["irai","iras","ira","irons","irez","iront"],"conditionnel":["irais","irais","irait","irions","iriez","iraient"]},
  faire:{présent:["fais","fais","fait","faisons","faites","font"],"passé composé":["ai fait","as fait","a fait","avons fait","avez fait","ont fait"],imparfait:["faisais","faisais","faisait","faisions","faisiez","faisaient"],"futur simple":["ferai","feras","fera","ferons","ferez","feront"],"conditionnel":["ferais","ferais","ferait","ferions","feriez","feraient"]}
  };
- const conjugations=[];Object.entries(forms).forEach(([verb,tenses])=>Object.entries(tenses).forEach(([tense,arr])=>arr.forEach((f,i)=>conjugations.push({front:'Conjugate "'+verb+'" in '+tense+' · '+pron[i],back:(verb==="être"||verb==="avoir"||verb==="aller"||verb==="faire"?"":pron[i]+" ")+f}))));
+ const conjugations=[];Object.entries(forms).forEach(([verb,tenses])=>Object.entries(tenses).forEach(([tense,arr])=>arr.forEach((f,i)=>conjugations.push({front:'Conjugate "'+verb+'" in '+tense+' · '+pron[i],back:(pron[i]==="je"&&/^(ai|aurai|irais|irai|aime|étais|était)/.test(f)?"j\u0027"+f.slice(1):pron[i]+" "+f)}))));
  const lessons=[
  ["Subject pronouns","Use je, tu, il/elle/on, nous, vous, ils/elles before a verb. Example: Nous parlons français."],
  ["Être and avoir","Être means to be; avoir means to have. Both are essential auxiliary verbs."],
