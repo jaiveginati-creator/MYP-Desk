@@ -50,6 +50,53 @@ function validateQuiz(data, requestedCount) {
     notice: questions.length < requestedCount ? "The AI generated fewer questions than requested." : "" };
 }
 
+
+function validateEassessment(data) {
+  if (!data || typeof data !== "object") throw new Error("The AI returned an invalid practice paper.");
+  const validateTask = (task, name) => {
+    if (!task || typeof task.text !== "string" || !task.text.trim() || !Array.isArray(task.questions) || task.questions.length !== 6) {
+      throw new Error("The generated " + name + " task is incomplete.");
+    }
+    const questions = task.questions.map((q, index) => {
+      const options = Array.isArray(q.options) ? q.options.map(value => String(value).trim()).slice(0, 4) : [];
+      const correctIndex = Number(q.correctIndex);
+      if (typeof q.question !== "string" || !q.question.trim() || options.length !== 4 || new Set(options).size !== 4 || !Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+        throw new Error("Question " + (index + 1) + " in " + name + " is invalid.");
+      }
+      return { question:q.question.trim().slice(0,1000), options, correctIndex, explanation:String(q.explanation || "").slice(0,1200) };
+    });
+    return { text:task.text.trim().slice(0,10000), questions };
+  };
+  if (typeof data.title !== "string" || typeof data.theme !== "string" || !data.writing || typeof data.writing.task !== "string" || !data.writing.task.trim()) {
+    throw new Error("The generated paper is missing required sections.");
+  }
+  return {
+    title:data.title.slice(0,180),
+    theme:data.theme.slice(0,120),
+    level:String(data.level || "").slice(0,40),
+    listening:validateTask(data.listening,"listening"),
+    reading:validateTask(data.reading,"reading"),
+    writing:{
+      stimulusTitle:String(data.writing.stimulusTitle || "Document support").slice(0,180),
+      stimulus:String(data.writing.stimulus || "").slice(0,5000),
+      task:data.writing.task.trim().slice(0,1800),
+      audience:String(data.writing.audience || "").slice(0,240),
+      purpose:String(data.writing.purpose || "").slice(0,240),
+      wordTarget:String(data.writing.wordTarget || "120–180 words").slice(0,80),
+      successCriteria:Array.isArray(data.writing.successCriteria) ? data.writing.successCriteria.map(String).slice(0,6) : []
+    }
+  };
+}
+function validateEassessmentMark(data) {
+  if (!data || !Number.isFinite(Number(data.score))) throw new Error("The AI returned an invalid writing assessment.");
+  return {
+    score:Math.max(0,Math.min(24,Math.round(Number(data.score)))),
+    strengths:Array.isArray(data.strengths) ? data.strengths.map(String).slice(0,4) : [],
+    improvements:Array.isArray(data.improvements) ? data.improvements.map(String).slice(0,4) : [],
+    feedback:String(data.feedback || "").slice(0,3000)
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -66,9 +113,9 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask", "reading"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
@@ -83,12 +130,36 @@ export default async function handler(req, res) {
 
   let userContent;
   let responseFormat;
+
+  if (action === "eassessment" || action === "eassessment_mark") {
+    const level = ["Emergent","Capable","Proficient"].includes(body.level) ? body.level : "Capable";
+    const theme = cleanText(body.theme, 160) || "Identities and relationships";
+    const referenceNotes = cleanText(body.referenceNotes, 2500);
+    if (action === "eassessment") {
+      userContent = `Create a complete, ORIGINAL MYP French Language Acquisition on-screen practice examination at ${level} level, based on the public IB assessment framework. Theme: ${theme}. Optional teacher-provided format notes: ${referenceNotes || "None"}.
+The published framework has three on-screen tasks: comprehending spoken multimodal texts (Criterion A, 24 marks), comprehending written multimodal texts (Criterion B, 24 marks), and writing in response to multimodal texts (Criterion D, 24 marks). Total: 72 marks. The separate speaking assessment is not part of this on-screen paper.
+Return ONLY valid JSON in this exact shape:
+{"title":"...","theme":"...","level":"...","listening":{"text":"A natural French listening script, 130–190 words for Emergent, 180–240 for Capable, 220–280 for Proficient. Include realistic spoken-language features appropriate to level.","questions":[{"question":"...","options":["...","...","...","..."],"correctIndex":0 ,"explanation":"..."}]},"reading":{"text":"An original French multimodal-style written stimulus described in text, 180–260 words for Emergent, 240–330 for Capable, 300–400 for Proficient. Include a clear source/genre such as a blog post, notice, interview or article.","questions":[{"question":"...","options":["...","...","...","..."],"correctIndex":0,"explanation":"..."}]},"writing":{"stimulusTitle":"...","stimulus":"A concise original multimodal stimulus represented as a poster, infographic description, short message or data summary. Include concrete details students can use.","task":"A clear writing task requiring a response to the stimulus.","audience":"...","purpose":"...","wordTarget":"...","successCriteria":["..."]}}
+Each listening and reading task must have exactly six questions, each with exactly four distinct options and one correct answer. Questions must test different details and interpretation, not trivia. The AI must generate all source texts itself. Use age-appropriate school-level content. Make distractors plausible but unambiguous. Keep language level consistent. Make the writing task require the student to respond to the supplied stimulus. Use a range of text types across the paper. Do not reproduce or imitate any identifiable past-paper question, wording, passage, or layout; use only broad assessment principles and create fresh content. No answer key outside the JSON fields.`;
+    } else {
+      const writingTask = cleanText(body.writingTask, 1800);
+      const stimulus = cleanText(body.stimulus, 5000);
+      const response = cleanText(body.response, 12000);
+      if (!writingTask || response.length < 20) return send(res, 400, { error: "Write your response before requesting feedback." });
+      userContent = `Assess this student's original French writing practice response at MYP ${level} level. This is formative feedback, not an official IB mark. The task is worth 24 marks and relates to Criterion D: Writing.
+Stimulus: ${stimulus}
+Task: ${writingTask}
+Student response: ${response}
+Use the task fulfilment, clarity, organization, vocabulary range, grammatical control, register, audience and purpose to make a fair, encouraging estimate out of 24. Do not reward length alone. Do not invent errors; quote only very short snippets if needed. Return ONLY JSON: {"score":0,"strengths":["..."],"improvements":["..."],"feedback":"A concise overall explanation of the estimated mark and next steps."}. Keep feedback specific, age-appropriate and constructive.`;
+    }
+    responseFormat = { type: "json_object" };
+  }
   if (action === "quiz") {
     const count = Math.max(1, Math.min(20, Number(body.count) || 10));
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else {
+  } else if (!["eassessment", "eassessment_mark"].includes(action)) {
     const task = {
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
@@ -110,8 +181,8 @@ export default async function handler(req, res) {
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-        temperature: action === "quiz" ? 0.35 : action === "reading" ? 0.65 : 0.55,
-        max_completion_tokens: action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+        temperature: action === "quiz" ? 0.35 : ["reading","eassessment"].includes(action) ? 0.65 : action === "eassessment_mark" ? 0.25 : 0.55,
+        max_completion_tokens: action === "eassessment" ? 7500 : action === "eassessment_mark" ? 1800 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
         ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [{ role: "system", content: system }, { role: "user", content: userContent }]
       })
@@ -123,6 +194,14 @@ export default async function handler(req, res) {
     }
     const content = payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
     if (!content) return send(res, 502, { error: "Groq returned an empty response." });
+    if (action === "eassessment") {
+      const paper = validateEassessment(parseJson(content));
+      return send(res, 200, { paper, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
+    }
+    if (action === "eassessment_mark") {
+      const assessment = validateEassessmentMark(parseJson(content));
+      return send(res, 200, { assessment, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
+    }
     if (action === "quiz") {
       const quiz = validateQuiz(parseJson(content), Math.max(1, Math.min(20, Number(body.count) || 10)));
       return send(res, 200, { quiz, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });

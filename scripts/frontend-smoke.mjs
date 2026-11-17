@@ -22,6 +22,12 @@ for (const [index, code] of inlineScripts.entries()) {
   if (check.status !== 0) throw new Error(`Inline script ${index + 1} failed syntax check:\\n${check.stderr}`);
 }
 
+
+const apiSyntax = spawnSync(process.execPath, ["--check", "api/ai.js"], { encoding: "utf8" });
+if (apiSyntax.status !== 0) throw new Error("AI API failed syntax check:\\n" + apiSyntax.stderr);
+const apiTests = spawnSync(process.execPath, ["--test", "tests/eassessment-api.test.mjs"], { encoding: "utf8" });
+if (apiTests.status !== 0) throw new Error("E-assessment API tests failed:\\n" + apiTests.stdout + apiTests.stderr);
+
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
@@ -67,7 +73,8 @@ try {
     ["vocabulary","Vocabulary · Vocabulaire","vocabulary"],
     ["conjugations","Conjugations · Conjugaison","conjugations"],
     ["grammar","Grammar · Grammaire","grammar"],
-    ["reading","AI Reading Studio · Compréhension","reading"]
+    ["reading","AI Reading Studio · Compréhension","reading"],
+    ["eassessment","E-Assessment Prep · Préparation","eassessment"]
   ]) {
     await page.locator('[data-french-skill-tab="' + tab + '"]').click();
     await page.locator('[data-skill-panel="' + panel + '"]').waitFor({state:"visible"});
@@ -75,7 +82,7 @@ try {
     if (await page.locator('[data-skill-panel]:visible').count() !== 1) throw new Error("Only the selected French skill tab should be visible.");
   }
   await page.locator('[data-french-skill-tab="vocabulary"]').click();
-  if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
+  if (await page.locator(".french-resource").count() !== 5) throw new Error("French workspace should have five study sections including e-assessment preparation.");
   if (await page.locator(".fd-card").count() !== 3) throw new Error("French workspace should render vocabulary, conjugation and grammar decks.");
   if (await page.locator(".fd-progress").count() !== 3) throw new Error("Each French flashcard deck should show progress.");
   if (await page.locator(".grammar-lesson").count() !== 50) throw new Error("French grammar should contain exactly 50 expandable lessons.");
@@ -105,6 +112,10 @@ try {
   if (await page.locator(".grammar-lesson-body > p").first().textContent().then(x => x.length) < 180) throw new Error("Grammar lessons should include full explanations.");
   await page.locator('[data-french-skill-tab="reading"]').click();
   if (await page.locator(".reading-ai:visible").count() !== 1) throw new Error("French should show the AI Reading Studio when its tab is selected.");
+  await page.locator('[data-french-skill-tab="eassessment"]').click();
+  if (await page.locator('[data-skill-panel="eassessment"]:visible').count() !== 1) throw new Error("French should show the e-assessment preparation panel when its tab is selected.");
+  if (await page.locator(".ea-controls select").count() !== 2) throw new Error("E-assessment prep should offer proficiency level and theme controls.");
+  if (!(await page.locator("[data-generate-eassessment]").isVisible())) throw new Error("E-assessment prep should provide a generate-paper action.");
   if (await page.locator(".french-vocab-item, .french-reading-item").count() !== 0) throw new Error("Static vocabulary tiles and static reading passages should be removed.");
   await page.locator('[data-french-skill-tab="vocabulary"]').click();
   await page.locator(".fd-card").first().click();
@@ -114,7 +125,7 @@ try {
   if (await page.locator("[data-listen], [data-speak]").count() !== 0) throw new Error("Listening and speaking should be deferred.");
   await page.locator('#navigation [data-page="french-capable"]').click();
   await page.getByRole("heading", { name: "Capable–Proficient." }).waitFor();
-  if (await page.locator(".french-resource").count() !== 4) throw new Error("Capable–Proficient should also have four general skill sections.");
+  if (await page.locator(".french-resource").count() !== 5) throw new Error("Capable–Proficient should also have five study sections.");
   if (await page.locator(".reading-ai").count() !== 1) throw new Error("Capable–Proficient should also have an AI Reading Studio.");
   const spacing=await page.locator("#pageContent").evaluate(el => getComputedStyle(el).paddingTop);
   if (parseFloat(spacing)<40) throw new Error("Study page spacing was not increased.");
