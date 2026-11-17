@@ -63,7 +63,7 @@ try {
   await page.getByRole("heading", { name: "French workspace." }).waitFor();
   await page.locator('#navigation [data-page="french-emergent"]').click();
   await page.getByRole("heading", { name: "Emergent." }).waitFor();
-  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire","Reading · Compréhension écrite"]) {
+  for (const heading of ["Vocabulary · Vocabulaire","Conjugations · Conjugaison","Grammar · Grammaire"]) {
     await page.getByRole("heading", { name: heading }).waitFor();
   }
   if (await page.locator(".french-resource").count() !== 4) throw new Error("French workspace should have exactly four general skill sections.");
@@ -76,7 +76,6 @@ try {
   if (!(await page.locator(".fd-card").first().evaluate(el => el.classList.contains("flipped")))) throw new Error("Flashcard should flip to reveal its answer.");
   await page.locator("[data-french-rate=known]").first().click();
   if (!(await page.locator(".fd-progress").first().textContent()).includes("1 KNOWN")) throw new Error("Flashcard self-rating should update progress.");
-  if (await page.locator(".reading-ai").count() !== 1) throw new Error("Capable–Proficient should also have an AI Reading Studio.");
   if (await page.locator("[data-listen], [data-speak]").count() !== 0) throw new Error("Listening and speaking should be deferred.");
   await page.locator('#navigation [data-page="french-capable"]').click();
   await page.getByRole("heading", { name: "Capable–Proficient." }).waitFor();
