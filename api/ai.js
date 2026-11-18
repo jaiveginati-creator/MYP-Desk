@@ -12,7 +12,7 @@ function cleanText(value, max = 12000) {
 }
 
 function parseJson(content) {
-  const text = String(content || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const text = String(content || "").trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
   return JSON.parse(text);
 }
 
