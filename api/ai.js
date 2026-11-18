@@ -207,8 +207,9 @@ function validateISPaper(data,mode,topic,level){
   let taskId=identifyTask(rawId)||identifyTask(t.taskName)||identifyTask(t.title);
   if(isCriterion){
    const expectedId="criterion-"+expectedCriterion;
-   if(!taskId && data.tasks.length===1)taskId=expectedId;
-   if(taskId)throw new Error("The criterion drill has an invalid task label.");
+   const label=(rawId+" "+String(t.taskName||"")+" "+String(t.title||"")).toLowerCase();
+   const hasCriterionLabel=label.includes("criterion "+expectedCriterion.toLowerCase())||label.includes(expectedId.toLowerCase());
+   if(rawId && rawId.toLowerCase()!==expectedId.toLowerCase() && !hasCriterionLabel && !label.includes("practice"))throw new Error("The criterion drill has an invalid task label.");
    taskId=expectedId;
   }else{
    if(!taskId && isTask && data.tasks.length===1)taskId=mode;
