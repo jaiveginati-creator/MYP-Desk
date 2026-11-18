@@ -190,11 +190,32 @@ function validateISPaper(data,mode,topic,level){
  const expectedCriterion=isCriterion?mode.slice(-1):null;
  if(!isFull&&!isTask&&!isCriterion)throw new Error("Unknown I&S practice mode.");
  if(!data||!Array.isArray(data.tasks)||data.tasks.length!==(isFull?3:1))throw new Error("The generated I&S paper has an incorrect task structure.");
- const normalized=data.tasks.map(t=>{
-  const taskId=String(t.taskId||"");
+ const taskAliases={
+  investigating:["investigating","task investigating","task 1","task a","a investigating","investigation"],
+  communicating:["communicating","task communicating","task 2","task b","b communicating","communication"],
+  thinking:["thinking","thinking critically","task thinking critically","task 3","task c","critical thinking"],
+ };
+ const identifyTask=(value)=>{
+  const label=String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  for(const id of Object.keys(IS_TASKS)){
+   if(taskAliases[id].some(alias=>label===alias||label.startsWith(alias+" ")||label.endsWith(" "+alias)))return id;
+  }
+  return "";
+ };
+ const normalized=data.tasks.map((t,index)=>{
+  const rawId=String(t.taskId||"");
+  let taskId=identifyTask(rawId)||identifyTask(t.taskName)||identifyTask(t.title);
   if(isCriterion){
-   if(taskId!=="criterion-"+expectedCriterion)throw new Error("The criterion drill is incomplete.");
-  }else if(!expectedTasks.includes(taskId))throw new Error("A required I&S examination task is missing or incorrectly labelled.");
+   const expectedId="criterion-"+expectedCriterion;
+   const label=(rawId+" "+String(t.taskName||"")+" "+String(t.title||"")).toLowerCase();
+   const hasCriterionLabel=label.includes("criterion "+expectedCriterion.toLowerCase())||label.includes(expectedId.toLowerCase());
+   if(rawId && rawId.toLowerCase()!==expectedId.toLowerCase() && !hasCriterionLabel && !label.includes("practice"))throw new Error("The criterion drill has an invalid task label.");
+   taskId=expectedId;
+  }else{
+   if(!taskId && isTask && data.tasks.length===1)taskId=mode;
+   if(!taskId && isFull && index<expectedTasks.length)taskId=expectedTasks[index];
+   if(!expectedTasks.includes(taskId))throw new Error("A required I&S examination task is missing or incorrectly labelled.");
+  }
   const expectedTask=isTask?IS_TASKS[mode]:isFull?IS_TASKS[taskId]:null;
   const expectedMarks=isCriterion?20:expectedTask.marks;
   const expectedBreakdown=isCriterion?{A:0,B:0,C:0,D:0,...{[expectedCriterion]:20}}:{A:0,B:0,C:0,D:0,...expectedTask.criteria};
