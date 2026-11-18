@@ -42,7 +42,7 @@ try{
     if(request.mode==="full"||request.mode==="investigating") assert.match(prompt,/Exactly 5 questions in this order: Criterion A = 2 marks, Criterion A = 4 marks, Criterion B = 5 marks, Criterion B = 5 marks, Criterion B = 10 marks/);
     if(request.mode==="full"||request.mode==="communicating") assert.match(prompt,/Exactly 5 questions in this order: Criterion A = 2 marks, Criterion A = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks/);
     if(request.mode==="full"||request.mode==="thinking") assert.match(prompt,/Exactly 7 questions in this order: Criterion A = 4 marks, Criterion A = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks, Criterion D = 5 marks, Criterion D = 5 marks, Criterion D = 10 marks/);
-    if(request.mode.startsWith("criterion-")) assert.match(prompt,/Exactly 4 questions, each worth 5 marks/);
+    if(mode.startsWith("criterion-")) assert.match(prompt,/Exactly 4 questions, each worth 5 marks/);
     assert.match(prompt,/Never reproduce/);
     assert.match(prompt,new RegExp(discipline==="history"?"Keep all content historical":discipline==="geography"?"Keep all content geographical":"genuinely interdisciplinary humanities"));
     assert.equal(request.response_format.type,"json_schema");
