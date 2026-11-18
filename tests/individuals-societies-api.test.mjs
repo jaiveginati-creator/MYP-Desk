@@ -26,22 +26,25 @@ function paper(mode){
  };
 }
 try{
+ for(const discipline of ["history","geography","integrated"]){
  for(const mode of ["full","A","B","C","D"]){
   globalThis.fetch=async(_url,options)=>{
    const request=JSON.parse(options.body);
    assert.match(request.messages[1].content,/released MYP I&S specimen\/past-paper assessments/);
    assert.match(request.messages[1].content,/Never reproduce/);
+   assert.match(request.messages[1].content,new RegExp(discipline==="history"?"firmly historical":discipline==="geography"?"firmly geographical":"genuinely interdisciplinary humanities"));
    assert.equal(request.response_format.type,"json_schema");
    return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(paper(mode))}}]})};
   };
   const result=response();
-  await handler({method:"POST",body:{action:"is_eassessment",mode,topic:"Mixed I&S topics",level:"MYP 4–5"}},result);
+  await handler({method:"POST",body:{action:"is_eassessment",mode,topic:"Mixed I&S topics",level:"MYP 4–5",discipline}},result);
   assert.equal(result.state.status,200,mode+" paper should generate");
   assert.equal(result.state.payload.paper.tasks.length,mode==="full"?4:1);
   assert.equal(result.state.payload.paper.totalMarks,mode==="full"?100:25);
   assert.equal(result.state.payload.paper.tasks.every(task=>task.questions.reduce((sum,q)=>sum+q.marks,0)===25),true);
  }
- console.log("PASS: I&S full paper and individual A–D criterion papers validate source material, task structure and 100/25-mark totals.");
+ }
+ console.log("PASS: History, Geography and Integrated Humanities full papers and individual A–D tasks validate source material, discipline-specific prompts, structure and 100/25-mark totals.");
 } finally {
  globalThis.fetch=originalFetch;
  if(originalKey===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=originalKey;
