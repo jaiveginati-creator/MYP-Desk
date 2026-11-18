@@ -682,7 +682,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
           temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment","is_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark","math_eassessment_mark"].includes(action) ? 0.25 : 0.55,
           max_completion_tokens: ["eassessment","science_eassessment","science_lesson","math_lesson","math_eassessment","is_eassessment"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "math_eassessment_mark" ? 6500 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
-          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark","math_eassessment","math_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
+          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark","math_eassessment","math_eassessment_mark","is_eassessment"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
         })
