@@ -5,7 +5,7 @@ const windowMock={};
 new Function("window",source)(windowMock);
 assert.ok(windowMock.MYPMath);
 const html=windowMock.MYPMath.markup();
-assert.match(html,/Haese Mathematics 9/);
+assert.match(html,/HAESE MATHEMATICS 9/);
 assert.match(html,/30 CHAPTERS/);
 assert.match(html,/Lessons/);
 assert.match(html,/E-assessment Prep/);
