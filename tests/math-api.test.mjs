@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import handler from "../api/ai.js";
+const originalFetch=globalThis.fetch,originalKey=process.env.GROQ_API_KEY,originalModel=process.env.GROQ_MODEL;
+process.env.GROQ_API_KEY="test-key";process.env.GROQ_MODEL="test-model";
+function res(){const state={status:200,payload:null};return {state,status(code){state.status=code;return this;},setHeader(){},json(payload){state.payload=payload;return this;}};}
+const longExplanation="This explanation introduces the mathematical idea carefully, defines the notation, explains why the method works and shows how the steps connect. It uses a clear example and builds the reasoning so a student can follow the method independently without skipping important steps.";
+const lesson={objectives:["Identify the method","Apply the rule","Explain the result"],overview:"This lesson introduces the idea, explains why it is useful and shows how it connects to the chapter. The main method is developed from a simple example before moving to less familiar questions.",sections:[1,2,3,4].map(n=>({heading:"Step "+n,explanation:longExplanation})),workedExample:"Start by identifying the known values. Write the relevant rule, substitute carefully, complete each operation in order and check the result by using the inverse operation. Explain what the answer means in the question.",keyTerms:[1,2,3,4].map(n=>({term:"Term "+n,definition:"A clear student-friendly definition explaining the meaning of this mathematical term and how it is used."})),commonMistake:"A common mistake is to change the order of operations or combine terms that are not like terms. Keep the operations in their correct order and check that each algebraic term has the same variable part before combining.",examPractice:[{question:"Calculate the value and show each step.",marks:4,answerOutline:"Substitute the values and follow the correct order of operations."},{question:"Explain why the method works.",marks:5,answerOutline:"Connect each step to the mathematical rule and check the result."}],checkQuestion:"Use the same idea in a new context and explain each step.",modelAnswer:"Identify the known information, select the correct rule, substitute and simplify. The final value is reasonable because it satisfies the original relationship."};
+function paper(mode){
+ const criteria=mode==="full"?["A","B","C","D"]:[mode];
+ return {title:"Haese MYP Mathematics practice",topicLabel:"Mixed topics",level:"MYP 4–5",mode,totalMarks:criteria.length*20,tasks:criteria.map(criterion=>({criterion,criterionName:"Criterion "+criterion,title:"Task "+criterion,marks:20,context:"A self-contained mathematical context gives all values, units and background needed to answer the questions. Students can use the information supplied here and their MYP mathematics knowledge to develop a clear solution.",questions:[{question:"Calculate the required value and show your working.",marks:5,commandTerm:"Calculate",successCriteria:["Correct method","Accurate answer"]},{question:"Explain the pattern or relationship shown.",marks:5,commandTerm:"Explain",successCriteria:["Clear reasoning"]},{question:"Apply the result to a changed situation.",marks:5,commandTerm:"Apply",successCriteria:["Transfer the method"]},{question:"Justify whether the answer is reasonable.",marks:5,commandTerm:"Justify",successCriteria:["Interpret the result"]}]}))};
+}
+try{
+ for(const mode of ["full","A","B","C","D"]){
+  globalThis.fetch=async(_url,options)=>{const prompt=JSON.parse(options.body).messages[1].content;assert.match(prompt,/ORIGINAL MYP/);assert.match(prompt,/exactly 20 marks/);return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(paper(mode))}}]})};};
+  const result=res();await handler({method:"POST",body:{action:"math_eassessment",mode,topic:"mixed",level:"MYP 4–5"}},result);
+  assert.equal(result.state.status,200,mode+" should generate");
+  assert.equal(result.state.payload.paper.tasks.length,mode==="full"?4:1);
+  assert.equal(result.state.payload.paper.totalMarks,mode==="full"?80:20);
+  assert.equal(result.state.payload.paper.tasks.every(t=>t.questions.reduce((n,q)=>n+q.marks,0)===20),true);
+ }
+ globalThis.fetch=async(_url,options)=>{const prompt=JSON.parse(options.body).messages[1].content;assert.match(prompt,/4–5 ordered teaching sections/);assert.match(prompt,/Haese Mathematics 9/);return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(lesson)}}]})};};
+ const lessonResult=res();await handler({method:"POST",body:{action:"math_lesson",level:"MYP 4",chapter:"Number",title:"Exponent notation",chapterTopics:["Exponent notation","Order of operations"]}},lessonResult);
+ assert.equal(lessonResult.state.status,200);assert.equal(lessonResult.state.payload.lesson.sections.length,4);assert.equal(lessonResult.state.payload.lesson.examPractice.length,2);
+ globalThis.fetch=async(_url,options)=>{const prompt=JSON.parse(options.body).messages[1].content;assert.match(prompt,/Criterion: A/);assert.match(prompt,/Student response/);return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify({assessments:[{score:4,maxScore:5,strengths:["Clear setup"],improvements:["Show the final simplification"],feedback:"Good method."},{score:3,maxScore:5,strengths:["Some correct working"],improvements:["Explain the pattern"],feedback:"Develop the explanation."}]})}}]})};};
+ const markResult=res();await handler({method:"POST",body:{action:"math_eassessment_mark",level:"MYP 4",answers:[{criterion:"A",criterionName:"Knowing and understanding",question:"Calculate 2 + 2",marks:5,response:"2 + 2 = 4"},{criterion:"B",criterionName:"Investigating patterns",question:"Find the pattern",marks:5,response:"The pattern increases by 2 each time."}]}},markResult);
+ assert.equal(markResult.state.status,200);assert.equal(markResult.state.payload.assessments.length,2);assert.equal(markResult.state.payload.assessments[0].score,4);assert.equal(markResult.state.payload.assessments[1].maxScore,5);
+ console.log("PASS: mathematics lesson generation, full and criterion practice papers, and multi-answer marking.");
+}finally{
+ globalThis.fetch=originalFetch;
+ if(originalKey===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=originalKey;
+ if(originalModel===undefined)delete process.env.GROQ_MODEL;else process.env.GROQ_MODEL=originalModel;
+}

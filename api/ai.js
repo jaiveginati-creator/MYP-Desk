@@ -127,6 +127,53 @@ const EASSESSMENT_MARK_SCHEMA = {
 };
 
 
+
+const MATH_LESSON_SCHEMA={type:"object",properties:{
+ objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},
+ sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},
+ workedExample:{type:"string"},keyTerms:{type:"array",items:{type:"object",properties:{term:{type:"string"},definition:{type:"string"}},required:["term","definition"],additionalProperties:false}},
+ commonMistake:{type:"string"},examPractice:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},answerOutline:{type:"string"}},required:["question","marks","answerOutline"],additionalProperties:false}},
+ checkQuestion:{type:"string"},modelAnswer:{type:"string"}
+},required:["objectives","overview","sections","workedExample","keyTerms","commonMistake","examPractice","checkQuestion","modelAnswer"],additionalProperties:false};
+const MATH_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},topicLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},context:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","context","questions"],additionalProperties:false}}},required:["title","topicLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
+const MATH_MARK_SCHEMA={type:"object",properties:{assessments:{type:"array",items:{type:"object",properties:{score:{type:"number"},maxScore:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","maxScore","strengths","improvements","feedback"],additionalProperties:false}}},required:["assessments"],additionalProperties:false};
+function validateMathLesson(data){
+ if(!data||!Array.isArray(data.sections)||data.sections.length<4)throw new Error("The AI returned an incomplete mathematics lesson.");
+ const clean=value=>String(value||"").trim().slice(0,4000);
+ const sections=data.sections.slice(0,6).map(x=>({heading:clean(x.heading).slice(0,100),explanation:clean(x.explanation)}));
+ if(sections.some(x=>!x.heading||x.explanation.length<100))throw new Error("A lesson section was too short.");
+ const keyTerms=Array.isArray(data.keyTerms)?data.keyTerms.slice(0,8).map(x=>({term:clean(x.term).slice(0,100),definition:clean(x.definition)})):[];
+ const examPractice=Array.isArray(data.examPractice)?data.examPractice.slice(0,3).map(x=>({question:clean(x.question),marks:Math.max(1,Math.min(8,Number(x.marks)||1)),answerOutline:clean(x.answerOutline)})):[];
+ if(keyTerms.length<3||examPractice.length<2||examPractice.some(x=>!x.question||!x.answerOutline))throw new Error("The lesson examples or practice questions were incomplete.");
+ return {objectives:Array.isArray(data.objectives)?data.objectives.map(clean).filter(Boolean).slice(0,5):[],overview:clean(data.overview),sections,workedExample:clean(data.workedExample),keyTerms,commonMistake:clean(data.commonMistake),examPractice,checkQuestion:clean(data.checkQuestion),modelAnswer:clean(data.modelAnswer)};
+}
+function validateMathPaper(data,mode,topic,level){
+ const criteria={A:"Knowing and understanding",B:"Investigating patterns",C:"Communicating",D:"Applying mathematics in real-life contexts"};
+ const expected=mode==="full"?["A","B","C","D"]:[mode];
+ if(!data||!Array.isArray(data.tasks)||data.tasks.length!==expected.length)throw new Error("The generated mathematics paper has an incorrect task structure.");
+ const tasks=data.tasks.map(task=>{
+  const criterion=String(task.criterion||"");
+  if(!expected.includes(criterion)||!Array.isArray(task.questions)||task.questions.length<3||task.questions.length>5)throw new Error("A mathematics criterion task is incomplete.");
+  const questions=task.questions.map(q=>({question:String(q.question||"").trim().slice(0,2200),marks:Math.max(1,Math.min(10,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
+  if(questions.some(q=>!q.question))throw new Error("A mathematics question is empty.");
+  const marks=questions.reduce((sum,q)=>sum+q.marks,0);
+  if(marks!==20||Number(task.marks)!==20)throw new Error("Each criterion task must add up to exactly 20 marks.");
+  return {criterion,criterionName:criteria[criterion],title:String(task.title||"Mathematics task").slice(0,160),marks,context:String(task.context||"").slice(0,4200),questions};
+ });
+ if(expected.some(c=>!tasks.some(t=>t.criterion===c))||new Set(tasks.map(t=>t.criterion)).size!==expected.length)throw new Error("A required mathematics criterion is missing.");
+ return {title:String(data.title||"Mathematics practice paper").slice(0,180),topicLabel:topic,level,mode,totalMarks:20*expected.length,durationMinutes:mode==="full"?120:30,tasks};
+}
+function validateMathMark(data,answers){
+ if(!data||!Array.isArray(data.assessments)||data.assessments.length!==answers.length)throw new Error("The AI returned incomplete mathematics feedback.");
+ return {assessments:data.assessments.map((item,i)=>{
+  const max=Math.max(1,Math.min(10,Number(answers[i].marks)||1));
+  return {score:Math.max(0,Math.min(max,Math.round(Number(item.score)||0))),maxScore:max,
+   strengths:Array.isArray(item.strengths)?item.strengths.map(String).slice(0,4):[],
+   improvements:Array.isArray(item.improvements)?item.improvements.map(String).slice(0,4):[],
+   feedback:String(item.feedback||"").slice(0,2500)};
+ })};
+}
+
 const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
 const SCIENCE_MARK_SCHEMA={type:"object",properties:{score:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","strengths","improvements","feedback"],additionalProperties:false};
 const SCIENCE_LESSON_SCHEMA={type:"object",properties:{objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},keyTerms:{type:"array",items:{type:"object",properties:{term:{type:"string"},definition:{type:"string"}},required:["term","definition"],additionalProperties:false}},visualModel:{type:"string"},workedExample:{type:"string"},commonMisconception:{type:"string"},examPractice:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},answerOutline:{type:"string"}},required:["question","marks","answerOutline"],additionalProperties:false}},checkQuestion:{type:"string"},modelAnswer:{type:"string"}},required:["objectives","overview","sections","keyTerms","visualModel","workedExample","commonMisconception","examPractice","checkQuestion","modelAnswer"],additionalProperties:false};
@@ -349,9 +396,9 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
@@ -393,6 +440,69 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
       : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
 
+
+
+  if(action==="math_lesson"){
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4";
+    const chapter=cleanText(body.chapter,160),title=cleanText(body.title,180);
+    const chapterTopics=Array.isArray(body.chapterTopics)?body.chapterTopics.map(x=>cleanText(x,120)).slice(0,12):[];
+    if(!chapter||!title)return send(res,400,{error:"A chapter and lesson title are required."});
+    userContent=`Create a complete, original MYP ${level} mathematics lesson for Haese Mathematics 9 (MYP 4), 3rd Edition. Chapter: ${chapter}. Lesson: ${title}. Related chapter sections: ${chapterTopics.join("; ")}.
+Write for a student learning this idea independently for the first time. Use simple, direct language but teach the mathematics thoroughly. Do not copy textbook wording or claim to reproduce its worked examples or exercises.
+TEACHING REQUIREMENTS:
+- Start with an overview explaining what the idea means, why it is useful and how it connects to the wider chapter.
+- Write 4–5 ordered teaching sections, each 130–190 words. Explain the idea from the beginning, define notation, show why each rule works where suitable, and build from simple to harder examples. Use complete connected paragraphs, not fragments.
+- Include 3–5 measurable learning objectives and 4–7 key terms with student-friendly definitions.
+- Include one workedExample (120–180 words) with a fully worked sequence: state the method, show each line of working, explain why each step is valid, and give the final answer. For geometry, statistics or other visual topics, describe any diagram/table/graph that would help.
+- Explain one commonMistake and how to avoid it.
+- Include 3 original examPractice questions with marks and clear answerOutlines. Vary the difficulty and include at least one application or reasoning question.
+- Finish with a checkQuestion and a complete modelAnswer.
+MATHEMATICAL ACCURACY:
+- Check every calculation, sign, algebraic transformation, unit and answer.
+- Use notation appropriate for MYP 4 and explain symbols before relying on them.
+- If a topic has multiple valid methods, explain the most accessible method first.
+- Do not introduce unrelated advanced content. Keep the explanation substantial but easy to follow.
+Return JSON with objectives, overview, sections (heading and explanation), workedExample, keyTerms, commonMistake, examPractice (question, marks, answerOutline), checkQuestion and modelAnswer.`;
+    responseFormat=strictJsonFormat("math_lesson",MATH_LESSON_SCHEMA);
+  }
+  if(action==="math_eassessment"){
+    const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const topic=cleanText(body.topic,160)||"mixed topics";
+    const criteria={A:"Knowing and understanding: select and apply appropriate mathematical knowledge and techniques to solve problems accurately.",B:"Investigating patterns: explore examples, identify a pattern, formulate a conjecture, test it and explain whether the evidence supports it.",C:"Communicating: present a clear mathematical argument using correct notation, diagrams, tables, graphs and logically ordered working.",D:"Applying mathematics in real-life contexts: formulate a real situation mathematically, choose a suitable method, solve, interpret the result in context and comment on reasonableness or limitations."};
+    const chosen=mode==="full"?["A","B","C","D"]:[mode];
+    userContent=`Create an ORIGINAL MYP ${level} Mathematics practice assessment for the Haese Mathematics 9 MYP 4 course. Topic focus: ${topic}. This is an original revision exercise inspired by the broad MYP Mathematics criteria, NOT an official IB paper and NOT a copy of any past paper.
+STRUCTURE:
+- Full mode: exactly four criterion tasks A, B, C and D, each worth exactly 20 marks (80 total).
+- Single-criterion mode: exactly one task for the selected criterion, worth 20 marks.
+- Each task must contain 3–5 numbered questions adding to exactly 20 marks. Use a sensible mix of marks and difficulty.
+- Each task begins with a self-contained mathematical context. Supply all information, measurements, tables or values needed. Never refer to an unseen diagram or image.
+CRITERION FOCUS:
+${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
+QUALITY:
+- Use authentic MYP command terms: calculate, determine, construct, describe, explain, justify, interpret, compare, evaluate, formulate.
+- Criterion A should test accurate methods and application, not only definitions.
+- Criterion B must present a pattern or data sequence students can investigate; ask them to identify, test and generalise a rule.
+- Criterion C must reward clear mathematical communication, notation and a reasoned explanation, not merely a final number.
+- Criterion D must use a believable real-life context with units and require interpretation of the result.
+- Use varied Haese chapter topics where mixed topics are selected. If a specific chapter is selected, keep the mathematics centred on that chapter.
+- Check that all numbers and datasets are internally consistent and that every question has a unique, mathematically valid interpretation.
+- Do not include answers or mark schemes in the student paper.
+Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each task: criterion, criterionName, title, marks, context, questions. Each question: question, marks, commandTerm, successCriteria.`;
+    responseFormat=strictJsonFormat("math_practice_paper",MATH_PAPER_SCHEMA);
+  }
+  if(action==="math_eassessment_mark"){
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const answers=Array.isArray(body.answers)?body.answers.slice(0,24):[];
+    if(!answers.length)return send(res,400,{error:"No mathematics answers were supplied."});
+    if(answers.some(a=>!cleanText(a.question,2200)))return send(res,400,{error:"A mathematics question is missing."});
+    userContent=`Give formative AI marking for these MYP ${level} Mathematics practice answers. This is a learning estimate, not an official IB grade. Return one assessment for each answer, in the exact same order.
+Assess only the mathematics demonstrated. Check numerical accuracy, algebraic steps, method selection, notation, units, reasoning and interpretation as relevant to the criterion and command term. Award partial credit when valid working is shown even if the final answer is wrong. Do not award marks for unsupported final answers where working is required. Do not penalise a correct alternative method. If the student response is blank or too incomplete, award zero and explain what is missing. Keep feedback specific and encouraging.
+ANSWERS:
+${answers.map((a,i)=>"ITEM "+(i+1)+"\\nCriterion: "+cleanText(a.criterion,1)+" — "+cleanText(a.criterionName,100)+"\\nTask: "+cleanText(a.taskTitle,160)+"\\nContext: "+cleanText(a.context,1800)+"\\nQuestion: "+cleanText(a.question,2200)+"\\nCommand term: "+cleanText(a.commandTerm,60)+"\\nAvailable marks: "+Math.max(1,Math.min(10,Number(a.marks)||1))+"\\nSuccess criteria: "+JSON.stringify(Array.isArray(a.successCriteria)?a.successCriteria.slice(0,5):[])+"\\nStudent response: "+cleanText(a.response,8000)).join("\\n\\n---\\n\\n")}
+Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improvements":["..."],"feedback":"..."}]}. Return exactly ${answers.length} assessment objects in the same order. Each score must be between 0 and that item's available marks.`;
+    responseFormat=strictJsonFormat("math_practice_feedback",MATH_MARK_SCHEMA);
+  }
 
   if(action==="science_eassessment"){
     const mode=["full","ad","bc"].includes(body.mode)?body.mode:"full";
@@ -476,7 +586,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) {
+  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) {
     const task = {
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
@@ -519,9 +629,9 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
         headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: ["eassessment","science_eassessment","science_lesson"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
-          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
+          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark","math_eassessment_mark"].includes(action) ? 0.25 : 0.55,
+          max_completion_tokens: ["eassessment","science_eassessment","science_lesson","math_lesson","math_eassessment"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "math_eassessment_mark" ? 6500 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark","math_eassessment","math_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
         })
@@ -539,6 +649,19 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     }
 
 
+    if(action==="math_lesson"){
+      return send(res,200,{lesson:validateMathLesson(parseJson(content)),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
+    if(action==="math_eassessment"){
+      const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+      const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+      const topic=cleanText(body.topic,160)||"Mixed topics";
+      return send(res,200,{paper:validateMathPaper(parseJson(content),mode,topic,level),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
+    if(action==="math_eassessment_mark"){
+      const answers=Array.isArray(body.answers)?body.answers.slice(0,24):[];
+      return send(res,200,{...validateMathMark(parseJson(content),answers),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
     if(action==="science_eassessment"){
       const parsed=parseJson(content);
       const paper=validateSciencePaper(parsed,["full","ad","bc"].includes(body.mode)?body.mode:"full",["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed",["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5");

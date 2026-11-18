@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const source=await readFile(new URL("../math.js",import.meta.url),"utf8");
+const windowMock={};
+new Function("window",source)(windowMock);
+assert.ok(windowMock.MYPMath);
+const html=windowMock.MYPMath.markup();
+assert.match(html,/HAESE MATHEMATICS 9/);
+assert.match(html,/30 CHAPTERS/);
+assert.match(html,/Lessons/);
+assert.match(html,/E-assessment Prep/);
+assert.match(html,/Formulae/);
+assert.equal((html.match(/data-math-tab=/g)||[]).length,3);
+assert.equal((html.match(/class="math-chapter"/g)||[]).length,30);
+assert.match(html,/Assumed knowledge/);
+console.log("PASS: Mathematics workspace has 30 Haese chapters and exactly three tabs.");
