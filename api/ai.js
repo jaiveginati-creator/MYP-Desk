@@ -174,6 +174,28 @@ function validateMathMark(data,answers){
  })};
 }
 
+
+const IS_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},topicLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},sourceTitle:{type:"string"},sourceText:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","sourceTitle","sourceText","questions"],additionalProperties:false}}},required:["title","topicLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
+function validateISPaper(data,mode,topic,level){
+ const expected=mode==="full"?["A","B","C","D"]:[mode];
+ const names={A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
+ if(!data||!Array.isArray(data.tasks)||data.tasks.length!==expected.length)throw new Error("The generated I&S paper has an incorrect criterion structure.");
+ const tasks=data.tasks.map(t=>{
+  const criterion=String(t.criterion||"");
+  if(!expected.includes(criterion)||!Array.isArray(t.questions)||t.questions.length<3||t.questions.length>5)throw new Error("A generated I&S criterion task is incomplete.");
+  const questions=t.questions.map(q=>({question:String(q.question||"").trim().slice(0,2400),marks:Math.max(1,Math.min(15,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
+  if(questions.some(q=>!q.question))throw new Error("An I&S question is empty.");
+  if(questions.reduce((sum,q)=>sum+q.marks,0)!==25||Number(t.marks)!==25)throw new Error("Each I&S criterion task must total exactly 25 marks.");
+  const sourceText=String(t.sourceText||"").trim();
+  if(sourceText.length<120)throw new Error("A source or stimulus is too short to support the questions.");
+  return {criterion,criterionName:names[criterion],title:String(t.title||"Criterion task").slice(0,180),marks:25,sourceTitle:String(t.sourceTitle||"Source").slice(0,180),sourceText:sourceText.slice(0,5000),questions};
+ });
+ if(expected.some(c=>!tasks.some(t=>t.criterion===c))||new Set(tasks.map(t=>t.criterion)).size!==expected.length)throw new Error("A required I&S criterion is missing or duplicated.");
+ const total=tasks.reduce((sum,t)=>sum+t.marks,0);
+ if(total!==expected.length*25||Number(data.totalMarks)!==total)throw new Error("The generated I&S paper has an incorrect total mark value.");
+ return {title:String(data.title||"Individuals & Societies practice paper").slice(0,180),topicLabel:topic,level,mode,totalMarks:total,durationMinutes:mode==="full"?120:30,tasks};
+}
+
 const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
 const SCIENCE_MARK_SCHEMA={type:"object",properties:{score:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","strengths","improvements","feedback"],additionalProperties:false};
 const SCIENCE_LESSON_SCHEMA={type:"object",properties:{objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},keyTerms:{type:"array",items:{type:"object",properties:{term:{type:"string"},definition:{type:"string"}},required:["term","definition"],additionalProperties:false}},visualModel:{type:"string"},workedExample:{type:"string"},commonMisconception:{type:"string"},examPractice:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},answerOutline:{type:"string"}},required:["question","marks","answerOutline"],additionalProperties:false}},checkQuestion:{type:"string"},modelAnswer:{type:"string"}},required:["objectives","overview","sections","keyTerms","visualModel","workedExample","commonMisconception","examPractice","checkQuestion","modelAnswer"],additionalProperties:false};
@@ -396,9 +418,9 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark", "is_eassessment"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark", "is_eassessment"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
@@ -504,6 +526,35 @@ Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improv
     responseFormat=strictJsonFormat("math_practice_feedback",MATH_MARK_SCHEMA);
   }
 
+
+  if(action==="is_eassessment"){
+    const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const topic=cleanText(body.topic,160)||"Mixed I&S topics";
+    const criteria={A:"Knowing and understanding: demonstrate accurate subject knowledge, use relevant concepts and terminology, and explain processes with specific examples.",B:"Investigating: formulate a focused research question, plan an investigation, select relevant sources, explain how evidence will be collected and consider source usefulness and limitations.",C:"Communicating: organise information for a stated purpose and audience, communicate clearly, use suitable subject terminology and conventions, and construct or interpret maps, graphs, tables or other representations when relevant.",D:"Thinking critically: interpret and analyse sources, identify perspectives and assumptions, compare evidence, evaluate claims and reach a balanced, evidence-supported conclusion."};
+    const chosen=mode==="full"?["A","B","C","D"]:[mode];
+    userContent=`Create an ORIGINAL MYP ${level} Individuals and Societies eAssessment-style practice paper on ${topic}. Use the structure, source-based approach, command terms and skill demands associated with released MYP I&S specimen/past-paper assessments as a reference for exam style, but write entirely new sources, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted past-paper questions or source material.
+STRUCTURE:
+- Full mode: four criterion tasks A, B, C and D, each exactly 25 marks, total 100 marks, recommended duration 120 minutes.
+- Single-criterion mode: one task for the selected criterion, exactly 25 marks, recommended duration 30 minutes.
+- Each task must include one substantial, original source or stimulus (for example a short historical account, a pair of contrasting viewpoints, a data table described in text, a map described in words, a case study, a policy extract or a short news-style report). The source must be long and detailed enough to support the questions.
+- Each task contains 3–5 structured questions adding to exactly 25 marks. Vary command terms and mark values. Questions should progress from accessible comprehension/application to more demanding analysis or evaluation.
+CRITERION FOCUS:
+${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
+QUALITY:
+- Use realistic MYP 4–5 contexts and accessible language, but demand precise evidence-based reasoning.
+- Across a full paper, balance history, geography, economics, politics, development, resources, sustainability and global interactions where appropriate to the chosen topic.
+- Criterion A should assess knowledge and understanding, not just recall.
+- Criterion B must ask students to formulate or refine a research question and make reasoned investigation choices; do not turn it into a generic essay.
+- Criterion C must assess clear communication for a purpose/audience and may include a map, graph, table, structured report or other suitable format described in the source.
+- Criterion D must require close source analysis, perspectives, evidence evaluation and a justified conclusion.
+- Provide enough source information for every question to be answerable. Make any invented data clearly part of a fictional case study; do not present fabricated statistics as real.
+- Use accurate MYP command terms. Do not include answer keys, model answers or marks awarded in the student paper.
+- Every question must include 2–4 concise successCriteria describing what a strong answer should demonstrate.
+Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each task: criterion, criterionName, title, marks, sourceTitle, sourceText, questions. Each question: question, marks, commandTerm, successCriteria. Total marks must be ${chosen.length*25}.`;
+    responseFormat=strictJsonFormat("individuals_societies_practice_paper",IS_PAPER_SCHEMA);
+  }
+
   if(action==="science_eassessment"){
     const mode=["full","ad","bc"].includes(body.mode)?body.mode:"full";
     const subject=["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed";
@@ -586,7 +637,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark"].includes(action)) {
+  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson", "math_lesson", "math_eassessment", "math_eassessment_mark", "is_eassessment"].includes(action)) {
     const task = {
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
@@ -629,9 +680,9 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
         headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark","math_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: ["eassessment","science_eassessment","science_lesson","math_lesson","math_eassessment"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "math_eassessment_mark" ? 6500 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
-          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark","math_eassessment","math_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
+          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment","is_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark","math_eassessment_mark"].includes(action) ? 0.25 : 0.55,
+          max_completion_tokens: ["eassessment","science_eassessment","science_lesson","math_lesson","math_eassessment","is_eassessment"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "math_eassessment_mark" ? 6500 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark","math_eassessment","math_eassessment_mark","is_eassessment"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
         })
@@ -661,6 +712,13 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     if(action==="math_eassessment_mark"){
       const answers=Array.isArray(body.answers)?body.answers.slice(0,24):[];
       return send(res,200,{...validateMathMark(parseJson(content),answers),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
+    if(action==="is_eassessment"){
+      const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+      const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+      const topic=cleanText(body.topic,160)||"Mixed I&S topics";
+      const paper=validateISPaper(parseJson(content),mode,topic,level);
+      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
     }
     if(action==="science_eassessment"){
       const parsed=parseJson(content);
