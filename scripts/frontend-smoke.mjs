@@ -54,6 +54,33 @@ try {
     await page.locator('#navigation [data-page="subjects"]').click();
     await page.locator('#pageContent [data-page="' + target + '"]').click();
     await page.getByRole("heading", { name: heading }).waitFor();
+    if (target === "individuals-societies") {
+      await page.locator(".is-shell").waitFor();
+      if (await page.locator(".is-criterion-card").count() !== 4) throw new Error("I&S overview should show four separate criterion sections.");
+      if (await page.locator(".is-tab").count() !== 6) throw new Error("I&S should have overview, four criteria and a full-paper section.");
+      await page.evaluate(() => {
+        window.fetch = async (_url, options) => {
+          const request = JSON.parse(options.body);
+          const criteria = request.mode === "full" ? ["A","B","C","D"] : [request.mode];
+          const names = {A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
+          const tasks = criteria.map(criterion => ({criterion,criterionName:names[criterion],title:"Practice task "+criterion,marks:25,sourceTitle:"Sample source",sourceText:"This is an original fictional case study with enough contextual information for students to interpret the situation, identify evidence and answer the related questions. It is included only to test the paper renderer.",questions:[{question:"Explain one important factor shown in the source.",marks:10,commandTerm:"Explain",successCriteria:["Use evidence from the source","Explain a relevant cause or consequence"]},{question:"Evaluate the significance of the issue.",marks:15,commandTerm:"Evaluate",successCriteria:["Consider more than one perspective","Reach a justified conclusion"]}]}));
+          return {ok:true,json:async()=>({paper:{title:"Mock I&S practice paper",topicLabel:request.topic,level:request.level,mode:request.mode,totalMarks:criteria.length*25,durationMinutes:request.mode==="full"?120:30,tasks}})};
+        };
+      });
+      for (const criterion of ["A","B","C","D"]) {
+        await page.locator('[data-is-tab="' + criterion + '"]').click();
+        if (!(await page.locator('[data-is-generate="' + criterion + '"]').isVisible())) throw new Error("Criterion "+criterion+" should provide its own AI paper generator.");
+        await page.locator('[data-is-generate="' + criterion + '"]').click();
+        await page.locator(".is-paper-head").waitFor();
+        if (await page.locator(".is-task").count() !== 1) throw new Error("Criterion "+criterion+" should generate one 25-mark task.");
+      }
+      await page.locator('[data-is-tab="full"]').click();
+      await page.locator('[data-is-generate="full"]').click();
+      await page.locator(".is-paper-head").waitFor();
+      if (await page.locator(".is-task").count() !== 4) throw new Error("The full I&S paper should contain all four criteria.");
+      if (await page.locator(".is-question textarea").count() !== 8) throw new Error("The full I&S paper should render answer spaces for all questions.");
+      if (!(await page.locator(".is-paper-head").textContent()).includes("100 MARKS")) throw new Error("The full I&S paper should total 100 marks.");
+    }
     if (target === "language-literature") {
       if (await page.locator("[data-eng-tab]").count() !== 4) throw new Error("English workspace should have four assessment tabs.");
       for (const tab of ["type1", "type2", "type3", "full"]) {
