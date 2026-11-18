@@ -753,7 +753,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
       return send(res,200,{...validateMathMark(parseJson(content),answers),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
     }
     if(action==="is_eassessment"){
-      const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+      const mode=["full","investigating","communicating","thinking","criterion-A","criterion-B","criterion-C","criterion-D"].includes(body.mode)?body.mode:"full";
       const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
       const topic=cleanText(body.topic,160)||"Mixed I&S topics";
       const paper=validateISPaper(parseJson(content),mode,topic,level);
