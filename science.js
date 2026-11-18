@@ -193,8 +193,8 @@ function renderSciencePaper(paper){
  const tasks=paper.tasks||[];
  return `<div class="science-ai-paper-head"><span>${esc(paper.level)} · ${esc(paper.subjectLabel)} · ${paper.totalMarks} MARKS</span><h2>${esc(paper.title)}</h2><p>Original AI-generated practice. Complete every response, then submit the paper for feedback.</p></div>${tasks.map((task,ti)=>`<article class="science-ai-task"><div class="science-ai-task-top"><span>CRITERION ${esc(task.criterion)} · ${esc(task.criterionName)}</span><strong>${task.marks} MARKS</strong></div><h3>${esc(task.title)}</h3><div class="science-ai-scenario"><span>SCIENTIFIC CONTEXT</span><p>${esc(task.scenario)}</p>${task.data?'<pre>'+esc(task.data)+'</pre>':''}</div>${task.questions.map((q,qi)=>`<div class="science-ai-question"><div><span>QUESTION ${ti+1}.${qi+1} · ${esc(q.commandTerm||"RESPOND")}</span><strong>${q.marks} MARKS</strong></div><h4>${esc(q.question)}</h4><textarea data-science-answer="${ti}-${qi}" rows="5" placeholder="Write your scientific response here…"></textarea><small>Focus: ${esc((q.successCriteria||[]).join(" · "))}</small></div>`).join("")}</article>`).join("")}<div class="science-ai-submit"><button class="science-ai-generate" id="science-ai-submit">Submit answers for AI marking ↗</button><p id="science-ai-status" aria-live="polite">AI will mark each response, calculate your score and give next steps.</p><div id="science-ai-total"></div></div>`;
 }
-async function generateSciencePractice(mode){
- const root=document.getElementById("science-ai-results"),button=document.querySelector("[data-science-generate]");
+async function generateSciencePractice(mode,triggerButton){
+ const root=document.getElementById("science-ai-results"),button=triggerButton||document.querySelector("[data-science-generate]");
  if(!root||!button)return;
  const subject=document.getElementById("science-ai-subject").value,level=document.getElementById("science-ai-level").value;
  button.disabled=true;button.textContent="Generating with AI…";
@@ -248,6 +248,10 @@ function markup(page){
  return "";
 }
 function handleClick(event){
+ const generateButton=event.target.closest("[data-science-generate]");
+ if(generateButton){generateSciencePractice(generateButton.dataset.scienceGenerate,generateButton);return;}
+ const submitButton=event.target.closest("#science-ai-submit");
+ if(submitButton){submitSciencePractice(submitButton);return;}
  const lessonButton=event.target.closest("[data-science-lesson]");
  if(lessonButton){
   const [subjectKey,chapterIndex,lessonIndex]=lessonButton.dataset.scienceLesson.split("|");
