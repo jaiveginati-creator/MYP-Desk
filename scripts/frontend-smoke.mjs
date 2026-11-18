@@ -27,6 +27,8 @@ const apiSyntax = spawnSync(process.execPath, ["--check", "api/ai.js"], { encodi
 if (apiSyntax.status !== 0) throw new Error("AI API failed syntax check:\\n" + apiSyntax.stderr);
 const englishSyntax = spawnSync(process.execPath, ["--check", "english-assessment.js"], { encoding: "utf8" });
 if (englishSyntax.status !== 0) throw new Error("English assessment frontend failed syntax check:\n" + englishSyntax.stderr);
+const scienceSyntax = spawnSync(process.execPath, ["--check", "science.js"], { encoding: "utf8" });
+if (scienceSyntax.status !== 0) throw new Error("Science frontend failed syntax check:\n" + scienceSyntax.stderr);
 const apiTests = spawnSync(process.execPath, ["--test"], { encoding: "utf8" });
 if (apiTests.status !== 0) throw new Error("E-assessment API tests failed:\\n" + apiTests.stdout + apiTests.stderr);
 
@@ -81,16 +83,28 @@ try {
   await page.locator('#navigation [data-page="subjects"]').click();
   await page.locator('#pageContent [data-page="sciences"]').click();
   if (await page.locator(".science-card").count() !== 3) throw new Error("Science page should show Biology, Chemistry and Physics.");
-  for (const [target, heading] of [
-    ["biology", "Biology."],
-    ["chemistry", "Chemistry."],
-    ["physics", "Physics."]
+  for (const [target, heading, units] of [
+    ["biology", "Biology.", 11],
+    ["chemistry", "Chemistry.", 12],
+    ["physics", "Physics.", 12]
   ]) {
     await page.locator('#pageContent [data-page="' + target + '"]').click();
     await page.getByRole("heading", { name: heading }).waitFor();
-    await page.locator('#pageContent [data-page="subjects"]').click();
-    await page.locator('#pageContent [data-page="sciences"]').click();
+    if (await page.locator(".science-unit").count() !== units) throw new Error(target + " should contain the Hodder chapter list.");
+    await page.locator(".science-lesson-card").first().click();
+    if (!(await page.locator("#scienceLessonView").isVisible())) throw new Error(target + " lessons should open an explanation and understanding check.");
+    if (await page.locator("#scienceLessonView li").count() < 2) throw new Error(target + " lesson should include key ideas.");
+    await page.locator("[data-close-science-lesson]").first().click();
+    await page.locator('#navigation [data-page="sciences"]').click();
   }
+  await page.locator('#pageContent [data-page="science-eassessment"]').click();
+  await page.getByRole("heading", { name: "E-assessment prep." }).waitFor();
+  await page.locator('#pageContent [data-page="science-ad"]').click();
+  await page.getByRole("heading", { name: "Criteria A & D practice." }).waitFor();
+  if (await page.locator(".science-practice-card textarea").count() !== 2) throw new Error("Criteria A & D should provide two written practice tasks.");
+  await page.locator('#navigation [data-page="science-bc"]').click();
+  await page.getByRole("heading", { name: "Criteria B & C practice." }).waitFor();
+  if (await page.locator(".science-practice-card textarea").count() !== 2) throw new Error("Criteria B & C should provide two written practice tasks.");
   await page.locator('#navigation [data-page="home"]').click();
   await page.locator("#pageContent .home-shell").waitFor();
   await page.locator('#pageContent [data-page="french"]').click();

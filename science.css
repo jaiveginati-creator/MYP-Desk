@@ -1,0 +1,85 @@
+/* MYP science learning hub */
+.science-subject-page,.science-practice-page{max-width:1120px;margin:0 auto;padding-bottom:32px}
+.science-back-link{border:0;background:none;color:var(--muted);font-size:9px;letter-spacing:.14em;font-weight:700;padding:0;margin:0 0 28px;cursor:pointer}
+.science-back-link:hover{color:var(--accent)}
+.science-subject-head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 0 28px;border-bottom:1px solid var(--line)}
+.science-subject-head h1,.science-practice-page>h1{font-family:var(--serif);font-size:clamp(48px,7vw,78px);line-height:.98;letter-spacing:-.07em;margin:13px 0;color:var(--text)}
+.science-subject-head h1 span,.science-practice-page>h1 span{color:var(--accent)}
+.science-subject-head .intro{max-width:650px;margin:0}
+.science-subject-symbol{width:116px;height:116px;border:1px solid rgba(230,200,122,.3);border-radius:50%;display:grid;place-items:center;color:var(--accent);font-size:65px;flex:0 0 auto;box-shadow:0 0 0 14px rgba(230,200,122,.035),0 0 55px rgba(230,200,122,.08)}
+.science-book-meta{font-size:8px;letter-spacing:.13em;color:var(--muted);margin-top:20px}.science-book-meta span{color:var(--accent);padding:0 7px}
+.science-progress-strip{display:flex;align-items:center;gap:10px;padding:17px 1px;color:var(--muted);font-size:9px;letter-spacing:.1em}.science-progress-strip>span:first-child{color:var(--accent);font-weight:700;margin-right:auto}.science-progress-strip strong{color:var(--text);font-size:11px;letter-spacing:0}
+.science-unit-list{display:grid;gap:9px}
+.science-unit{border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,#151411,#101010);overflow:hidden}
+.science-unit[open]{border-color:rgba(230,200,122,.32)}
+.science-unit>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:15px;padding:17px 19px;min-height:78px}
+.science-unit>summary::-webkit-details-marker{display:none}
+.science-unit-no{font-family:var(--serif);font-size:23px;color:var(--accent);width:28px;flex:0 0 auto}
+.science-unit-title{display:grid;gap:5px;min-width:0;flex:1}
+.science-unit-title strong{font-size:14px;font-weight:600;color:var(--text)}
+.science-unit-title small{font-size:10px;line-height:1.6;color:var(--muted)}
+.science-lesson-count{font-size:8px;letter-spacing:.12em;color:#b7a678;white-space:nowrap}
+.science-unit-chevron{color:var(--accent);font-size:18px;transition:transform .2s}
+.science-unit[open] .science-unit-chevron{transform:rotate(45deg)}
+.science-unit-body{border-top:1px solid rgba(230,200,122,.13);padding:14px}
+.science-lesson-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.science-lesson-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:8px;padding:15px;border:1px solid #2b2924;border-radius:9px;background:#111;cursor:pointer;color:var(--text);min-height:150px;transition:border-color .2s,transform .2s}
+.science-lesson-card:hover{border-color:rgba(230,200,122,.48);transform:translateY(-2px)}
+.science-lesson-index{font-size:8px;letter-spacing:.14em;color:var(--accent)}
+.science-lesson-card strong{font-size:13px;font-weight:600}
+.science-lesson-card small{font-size:10px;line-height:1.65;color:var(--muted)}
+.science-open-lesson{font-size:8px;letter-spacing:.12em;color:#c8b783;margin-top:auto}
+.science-lesson-view{margin-top:18px;padding:22px;border:1px solid rgba(230,200,122,.32);border-radius:13px;background:linear-gradient(145deg,#191711,#111)}
+.science-lesson-view-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.science-lesson-view-head>div>span,.science-lesson-view h3,.science-check-question>span{font-size:8px;letter-spacing:.15em;color:var(--accent);font-weight:700}
+.science-lesson-view-head h2{font-family:var(--serif);font-size:30px;letter-spacing:-.04em;margin:8px 0}
+.science-lesson-view-head button{border:1px solid var(--line);background:#111;color:var(--text);width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer}
+.science-lesson-intro{font-size:12px;line-height:1.8;color:#c9c4b7;max-width:760px}
+.science-lesson-view h3{margin:22px 0 9px}
+.science-lesson-view ul{padding-left:19px;margin:0;display:grid;gap:8px}
+.science-lesson-view li{font-size:11px;line-height:1.8;color:#d3d0c8}
+.science-check-question{margin-top:20px;padding:16px;border:1px solid #383328;border-radius:9px;background:#0e0e0d}
+.science-check-question p{font-size:12px;color:var(--text);line-height:1.7}
+.science-check-question textarea,.science-practice-card textarea{width:100%;resize:vertical;border:1px solid #34312a;border-radius:8px;background:#0a0a09;color:var(--text);padding:12px;font:inherit;font-size:11px;line-height:1.7;outline:none}
+.science-check-question textarea:focus,.science-practice-card textarea:focus{border-color:var(--accent)}
+.science-lesson-view-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:15px;color:var(--muted);font-size:9px}
+.science-lesson-view-foot button,.science-subject-footer button{border:0;background:none;color:var(--accent);font-size:8px;font-weight:700;letter-spacing:.12em;cursor:pointer}
+.science-subject-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:26px;padding-top:15px;border-top:1px solid var(--line);color:var(--muted);font-size:8px;letter-spacing:.12em}
+.science-tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.science-tool-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:11px;min-height:220px;padding:19px;text-align:left;border:1px solid rgba(230,200,122,.19);border-radius:12px;background:linear-gradient(145deg,#191711,#10100f);color:var(--text);cursor:pointer;transition:transform .2s,border-color .2s}
+.science-tool-card:hover{transform:translateY(-3px);border-color:rgba(230,200,122,.52)}
+.science-tool-number{position:absolute;right:16px;top:16px;color:#81775e;font-size:8px;letter-spacing:.12em}
+.science-tool-icon{height:42px;min-width:42px;padding:0 8px;display:grid;place-items:center;border:1px solid rgba(230,200,122,.27);border-radius:12px;color:var(--accent);font-size:20px}
+.science-tool-card strong{font-family:var(--serif);font-size:21px;font-weight:500;letter-spacing:-.03em}
+.science-tool-card small{font-size:10px;line-height:1.7;color:var(--muted)}
+.science-tool-card>b{font-size:8px;letter-spacing:.13em;color:var(--accent);margin-top:auto}
+.science-tool-card>b span{font-size:13px;margin-left:5px}
+.science-practice-page>h1{margin-top:13px}
+.science-practice-page>.intro{max-width:720px}
+.science-criteria-note{display:flex;align-items:center;gap:13px;margin:23px 0;padding:14px 16px;border:1px solid rgba(230,200,122,.2);border-radius:9px;background:#14120e}
+.science-criteria-note strong{font-family:var(--serif);font-size:24px;color:var(--accent)}
+.science-criteria-note span{font-size:10px;color:var(--muted)}
+.science-practice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.science-practice-card{padding:19px;border:1px solid var(--line);border-radius:12px;background:#12110f;display:flex;flex-direction:column;gap:12px}
+.science-practice-card-top{display:flex;justify-content:space-between;color:var(--accent);font-size:8px;letter-spacing:.14em}
+.science-practice-card h2{font-family:var(--serif);font-size:23px;font-weight:500;margin:0}
+.science-practice-card>p{font-size:10px;line-height:1.7;color:var(--muted);margin:0}
+.science-task-box{padding:14px;border:1px solid #383328;border-radius:8px;background:#0c0c0b}
+.science-task-box>span{font-size:8px;letter-spacing:.13em;color:var(--accent);font-weight:700}
+.science-task-box p{font-size:11px;line-height:1.8;color:#e0ddd4;margin:9px 0 0}
+.science-practice-card label{font-size:9px;letter-spacing:.1em;color:#c6b98e}
+.science-practice-tip{padding:12px;border-left:2px solid var(--accent);background:#1b1914}
+.science-practice-tip strong{font-size:9px;color:var(--accent)}
+.science-practice-tip p{font-size:10px;line-height:1.7;color:#bdb7a9;margin:5px 0 0}
+.science-copy-prompt{align-self:flex-start;border:1px solid #3b3528;background:transparent;color:var(--accent);padding:9px 11px;border-radius:6px;font-size:8px;letter-spacing:.1em;cursor:pointer}
+.science-practice-disclaimer{font-size:9px;line-height:1.7;color:var(--muted);margin-top:18px}
+.science-ea-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px 0}
+.science-ea-overview>div{padding:15px;border:1px solid var(--line);border-radius:9px;background:#12110f;display:grid;gap:8px}
+.science-ea-overview span{font-size:8px;letter-spacing:.15em;color:var(--accent)}
+.science-ea-overview strong{font-family:var(--serif);font-size:19px;font-weight:500}
+.science-ea-overview small{font-size:10px;line-height:1.6;color:var(--muted)}
+.science-exam-tips{margin-top:24px;padding:20px;border:1px solid var(--line);border-radius:11px;background:#12110f}
+.science-exam-tips h2{font-family:var(--serif);font-size:23px;font-weight:500;margin:0 0 13px}
+.science-exam-tips ol{padding-left:20px;margin:0;display:grid;gap:9px}
+.science-exam-tips li{font-size:11px;line-height:1.7;color:#c8c3b8;padding-left:4px}
+@media(max-width:760px){.science-tools-grid{grid-template-columns:1fr}.science-practice-grid{grid-template-columns:1fr}.science-subject-symbol{width:75px;height:75px;font-size:42px}.science-unit>summary{padding:14px 12px;gap:9px}.science-unit-title strong{font-size:12px}.science-unit-title small{font-size:9px}.science-lesson-list{grid-template-columns:1fr}.science-ea-overview{grid-template-columns:1fr}.science-subject-footer{align-items:flex-start;flex-direction:column}}
