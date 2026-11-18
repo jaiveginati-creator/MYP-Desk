@@ -22,7 +22,7 @@ try{
   assert.equal(calls,1);
  }
  let calls=0;
- globalThis.fetch=async(_url,options)=>{calls++;assert.match(JSON.parse(options.body).messages[1].content,/4–5 ordered concept sections/);return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(lesson)}}]})};};
+ globalThis.fetch=async(_url,options)=>{calls++;assert.match(JSON.parse(options.body).messages[1].content,/5–6 ordered concept sections/);return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(lesson)}}]})};};
  const lessonResult=res();await handler({method:"POST",body:{action:"science_lesson",subject:"biology",level:"MYP 4–5",title:"Photosynthesis",summary:"Plants capture light energy.",points:["Chlorophyll absorbs light.","Carbon dioxide and water make glucose and oxygen."]}},lessonResult);
  assert.equal(lessonResult.state.status,200);
  assert.equal(lessonResult.state.payload.lesson.sections.length,4);
