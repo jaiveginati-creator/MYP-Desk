@@ -247,6 +247,19 @@ function markup(page){
  if(page==="science-bc")return criteriaPage("bc");
  return "";
 }
+function renderScienceLessonFallback(lesson,subjectKey,lessonIndex,note){
+ return `<div class="science-lesson-view-head"><div><span>LESSON ${String(Number(lessonIndex)+1).padStart(2,"0")} · ${esc(books[subjectKey].title.toUpperCase())}</span><h2>${esc(lesson.title)}</h2></div><button type="button" data-close-science-lesson aria-label="Close lesson">×</button></div><p class="science-lesson-intro">${esc(lesson.summary)}</p><p class="science-lesson-ai-note">${esc(note)}</p><h3>KEY IDEAS</h3><ul>${lesson.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul><div class="science-check-question"><span>CHECK YOUR UNDERSTANDING</span><p>${esc(lesson.check)}</p><textarea rows="3" placeholder="Try explaining this in your own words…"></textarea></div><div class="science-lesson-view-foot"><span>Original MYP-level explanation</span><button type="button" data-close-science-lesson>BACK TO UNIT</button></div>`;
+}
+function renderScienceLesson(lesson,detail,subjectKey,lessonIndex){
+ return `<div class="science-lesson-view-head"><div><span>LESSON ${String(Number(lessonIndex)+1).padStart(2,"0")} · ${esc(books[subjectKey].title.toUpperCase())} · MYP 4–5</span><h2>${esc(lesson.title)}</h2></div><button type="button" data-close-science-lesson aria-label="Close lesson">×</button></div>
+ <p class="science-lesson-intro">${esc(detail.overview)}</p>
+ <section class="science-lesson-objectives"><h3>BY THE END OF THIS LESSON</h3><ul>${detail.objectives.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section>
+ <h3>LEARN THE CONCEPTS</h3><div class="science-lesson-sections">${detail.sections.map((section,index)=>`<article class="science-lesson-section"><span>0${index+1}</span><div><h4>${esc(section.heading)}</h4><p>${esc(section.explanation)}</p></div></article>`).join("")}</div>
+ <section class="science-lesson-worked"><h3>WORKED APPLICATION</h3><p>${esc(detail.workedExample)}</p></section>
+ <section class="science-lesson-misconception"><h3>COMMON MISCONCEPTION</h3><p>${esc(detail.commonMisconception)}</p></section>
+ <div class="science-check-question"><span>CHECK YOUR UNDERSTANDING</span><p>${esc(detail.checkQuestion||lesson.check)}</p><textarea rows="5" placeholder="Write a complete answer using scientific terms and reasoning…"></textarea><details class="science-model-answer"><summary>Show a model answer</summary><p>${esc(detail.modelAnswer)}</p></details></div>
+ <div class="science-lesson-view-foot"><span>AI-expanded original MYP-level lesson</span><button type="button" data-close-science-lesson>BACK TO UNIT</button></div>`;
+}
 function handleClick(event){
  const generateButton=event.target.closest("[data-science-generate]");
  if(generateButton){generateSciencePractice(generateButton.dataset.scienceGenerate,generateButton);return;}
@@ -259,7 +272,11 @@ function handleClick(event){
   const view=document.getElementById("scienceLessonView");
   if(!lesson||!view)return;
   view.hidden=false;
-  view.innerHTML=`<div class="science-lesson-view-head"><div><span>LESSON ${String(Number(lessonIndex)+1).padStart(2,"0")} · ${esc(books[subjectKey].title.toUpperCase())}</span><h2>${esc(lesson.title)}</h2></div><button type="button" data-close-science-lesson aria-label="Close lesson">×</button></div><p class="science-lesson-intro">${esc(lesson.summary)}</p><h3>KEY IDEAS</h3><ul>${lesson.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul><div class="science-check-question"><span>CHECK YOUR UNDERSTANDING</span><p>${esc(lesson.check)}</p><textarea rows="3" placeholder="Try explaining this in your own words…"></textarea></div><div class="science-lesson-view-foot"><span>Original MYP-level explanation</span><button type="button" data-close-science-lesson>BACK TO UNIT</button></div>`;
+  view.innerHTML=renderScienceLessonFallback(lesson,subjectKey,lessonIndex,"Loading a fuller lesson…");
+  fetch(window.PARLER_AI_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"science_lesson",subject:subjectKey,level:"MYP 4–5",title:lesson.title,summary:lesson.summary,points:lesson.points})})
+   .then(async response=>{const data=await response.json();if(!response.ok||!data.lesson)throw new Error(data.error||"Could not expand this lesson.");return data.lesson;})
+   .then(detail=>{if(view.isConnected&&!view.hidden)view.innerHTML=renderScienceLesson(lesson,detail,subjectKey,lessonIndex);})
+   .catch(error=>{if(view.isConnected&&!view.hidden){const note=document.createElement("p");note.className="science-lesson-ai-note";note.textContent="Expanded lesson unavailable right now. The core lesson notes are still available below. "+(error.message||"");view.prepend(note);}});
   view.scrollIntoView({behavior:"smooth",block:"start"});
   return;
  }
