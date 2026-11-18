@@ -114,3 +114,22 @@
 .science-model-answer{margin-top:14px;border-top:1px solid #353126;padding-top:12px}
 .science-model-answer summary{cursor:pointer;color:var(--accent);font-size:10px;letter-spacing:.08em}
 .science-model-answer p{font-size:11px;line-height:1.8;color:#c9c4b7}
+
+/* More complete MYP Science lesson and eAssessment presentation */
+.science-ai-paper-structure{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.science-ai-paper-structure span{display:flex;gap:9px;align-items:center;padding:8px 11px;border:1px solid #343434;border-radius:6px;color:#aaa;font-size:9px;letter-spacing:.06em}
+.science-ai-paper-structure b{color:#eee;font-size:11px}
+.science-lesson-glossary,.science-lesson-visual,.science-lesson-exam{margin-top:20px;padding:17px;border:1px solid #353126;border-radius:9px;background:#11100d}
+.science-lesson-glossary dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 0}
+.science-lesson-glossary dl>div{padding:11px;border:1px solid #302d26;border-radius:7px}
+.science-lesson-glossary dt{font-size:11px;font-weight:700;color:#e8d7a9;margin-bottom:5px}
+.science-lesson-glossary dd{font-size:10px;line-height:1.7;color:#c9c4b7;margin:0}
+.science-lesson-visual p{font-size:11px;line-height:1.9;color:#c9c4b7;margin:0;white-space:pre-line}
+.science-lesson-exam{display:grid;gap:12px}
+.science-lesson-exam>h3{margin:0}
+.science-lesson-exam article{padding:13px;border:1px solid #302d26;border-radius:7px}
+.science-lesson-exam article>div{display:flex;justify-content:space-between;gap:12px;color:#b7a678;font-size:9px;letter-spacing:.1em}
+.science-lesson-exam article>p{font-size:11px;line-height:1.8;color:#e0ddd4}
+.science-lesson-exam details summary{cursor:pointer;color:var(--accent);font-size:10px}
+.science-lesson-exam details p{font-size:10px;line-height:1.8;color:#c9c4b7}
+@media(max-width:650px){.science-lesson-glossary dl{grid-template-columns:1fr}.science-ai-paper-structure{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
