@@ -45,7 +45,7 @@ try{
    };
    const result=response();
    await handler({method:"POST",body:{action:"is_eassessment",mode,topic:"Changing communities",level:"MYP 4–5",discipline}},result);
-   assert.equal(result.state.status,200,discipline+" "+mode+" should generate");
+   assert.equal(result.state.status,200,discipline+" "+mode+" should generate: "+JSON.stringify(result.state.payload));
    const generated=result.state.payload.paper;
    assert.equal(generated.totalMarks,mode==="full"?80:["investigating","communicating","thinking"].includes(mode)?({investigating:26,communicating:18,thinking:36}[mode]):20);
    if(mode==="full"){
