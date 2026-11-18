@@ -499,6 +499,11 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     }
 
 
+    if(action==="science_eassessment"){
+      const parsed=parseJson(content);
+      const paper=validateSciencePaper(parsed,["full","ad","bc"].includes(body.mode)?body.mode:"full",["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed",["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5");
+      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
     if(action==="science_lesson"){
       const lesson=validateScienceLesson(parseJson(content));
       return send(res,200,{lesson,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
