@@ -127,6 +127,24 @@ const EASSESSMENT_MARK_SCHEMA = {
 };
 
 
+const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
+const SCIENCE_MARK_SCHEMA={type:"object",properties:{score:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","strengths","improvements","feedback"],additionalProperties:false};
+function validateSciencePaper(data,mode,subject,level){
+ if(!data||!Array.isArray(data.tasks)||!data.tasks.length)throw new Error("The AI returned an incomplete science assessment.");
+ const expected=mode==="full"?["A","B","C","D"]:mode==="ad"?["A","D"]:["B","C"];
+ const tasks=data.tasks.slice(0,4).map(t=>{
+  if(!expected.includes(String(t.criterion))||!Array.isArray(t.questions)||!t.questions.length)throw new Error("A generated science criterion task is incomplete.");
+  const questions=t.questions.slice(0,4).map(q=>({question:String(q.question||"").slice(0,2400),marks:Math.max(1,Math.min(12,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
+  if(questions.some(q=>!q.question.trim()))throw new Error("A science question is empty.");
+  const marks=questions.reduce((sum,q)=>sum+q.marks,0);
+  if(marks!==20)throw new Error("Each science criterion task must total exactly 20 marks.");
+  return {criterion:String(t.criterion),criterionName:String(t.criterionName||"").slice(0,100),title:String(t.title||"Criterion task").slice(0,180),marks,scenario:String(t.scenario||"").slice(0,4500),data:String(t.data||"").slice(0,2500),questions};
+ });
+ if(expected.some(c=>!tasks.some(t=>t.criterion===c)))throw new Error("The generated assessment is missing a required criterion.");
+ const total=tasks.reduce((sum,t)=>sum+t.marks,0);
+ return {title:String(data.title||"Science practice assessment").slice(0,180),subject,subjectLabel:subject==="mixed"?"Mixed sciences":subject[0].toUpperCase()+subject.slice(1),level,mode,totalMarks:total,tasks};
+}
+
 const ENGLISH_TASK_SCHEMA = {
   type:"object",
   properties:{
@@ -316,9 +334,9 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
@@ -360,6 +378,25 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
       : strictJsonFormat("french_writing_assessment", EASSESSMENT_MARK_SCHEMA);
   }
 
+
+  if(action==="science_eassessment"){
+    const mode=["full","ad","bc"].includes(body.mode)?body.mode:"full";
+    const subject=["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed";
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const criteria=mode==="full"?["A","B","C","D"]:mode==="ad"?["A","D"]:["B","C"];
+    const criterionGuides={A:"Knowing and understanding: apply scientific knowledge, explain concepts, interpret information and solve problems.",B:"Inquiring and designing: formulate research questions, hypotheses, variables and a valid, safe, repeatable method.",C:"Processing and evaluating: process data, identify patterns, draw evidence-based conclusions and evaluate methods.",D:"Reflecting on the impacts of science: discuss scientific applications and their social, ethical, economic and environmental implications using multiple perspectives."};
+    userContent=`Create an ORIGINAL MYP ${level} Sciences assessment for ${subject==="mixed"?"a balanced mix of biology, chemistry and physics":subject}. Assessment mode: ${mode}. Include exactly one task for each criterion: ${criteria.join(", ")}. Each task must include a rich, self-contained scientific scenario and 2–3 distinct questions. Total marks: 20 per criterion (divide marks across its questions, adding to exactly 20). Criteria guidance: ${criteria.map(c=>c+": "+criterionGuides[c]).join(" ")}. Include realistic supplied data as a compact text table in the data field when it helps; questions must be answerable from the scenario, supplied data and MYP-level scientific knowledge. Vary the scientific topic and context. Use clear command terms, age-appropriate MYP 4–5 language, and original material. Never copy past-paper questions. Return JSON with title, subject, subjectLabel, level, mode, totalMarks, tasks. Each task: criterion, criterionName, title, marks, scenario, data, questions. Each question: question, marks, commandTerm, successCriteria. Ensure every task's question marks total exactly 20. Return only JSON.`;
+    responseFormat=strictJsonFormat("science_practice_paper",SCIENCE_PAPER_SCHEMA);
+  }
+  if(action==="science_eassessment_mark"){
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const maxMarks=Math.max(1,Math.min(12,Number(body.marks)||5));
+    const response=cleanText(body.response,14000),question=cleanText(body.question,2600);
+    if(!question||response.length<12)return send(res,400,{error:"Write your science response before requesting feedback."});
+    userContent=`Give formative AI marking for this MYP ${level} Sciences response. Subject: ${cleanText(body.subject,40)}. Criterion ${cleanText(body.criterion,1)} — ${cleanText(body.criterionName,100)}. Task: ${cleanText(body.taskTitle,180)}. Scientific context: ${cleanText(body.scenario,4000)}. Supplied data: ${cleanText(body.data,2200)}. Question: ${question}. Command term: ${cleanText(body.commandTerm,60)}. Available marks: ${maxMarks}. Success criteria: ${JSON.stringify(Array.isArray(body.successCriteria)?body.successCriteria.slice(0,5):[])}. Student response: ${response}. Assess only demonstrated understanding. Apply the criterion accurately: A scientific accuracy/application/reasoning; B research question, hypothesis, variables and method; C data processing, interpretation, conclusion and evaluation; D balanced discussion of scientific impacts and perspectives. Do not reward length alone or invent mistakes. Give clear, specific, encouraging feedback in English. This is practice feedback, not an official IB grade. Return JSON with score (0 to ${maxMarks}), strengths, improvements and feedback.`;
+    responseFormat=strictJsonFormat("science_practice_feedback",SCIENCE_MARK_SCHEMA);
+  }
+
   if(action==="english_eassessment_mark"){
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     {
@@ -376,7 +413,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark"].includes(action)) {
+  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) {
     const task = {
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
@@ -393,6 +430,12 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
   }
 
   try {
+
+    if(action==="science_eassessment"){
+      const parsed=parseJson(content);
+      const paper=validateSciencePaper(parsed,["full","ad","bc"].includes(body.mode)?body.mode:"full",["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed",["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5");
+      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
     if(action==="english_eassessment"){
       const requestedType=["type1","type2","type3","full"].includes(body.taskType)?body.taskType:"type1";
       const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
@@ -418,8 +461,8 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
         headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-          temperature: action === "quiz" ? 0.35 : ["reading","eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: ["eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 0.25 : 0.55,
+          max_completion_tokens: ["eassessment","science_eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
           ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
@@ -437,6 +480,14 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
       break;
     }
 
+
+    if(action==="science_eassessment_mark"){
+      const parsed=parseJson(content);
+      if(!parsed||!Number.isFinite(Number(parsed.score)))throw new Error("The AI returned invalid science feedback.");
+      const maximum=Math.max(1,Math.min(12,Number(body.marks)||5));
+      const assessment={score:Math.max(0,Math.min(maximum,Math.round(Number(parsed.score)))),maxScore:maximum,strengths:Array.isArray(parsed.strengths)?parsed.strengths.map(String).slice(0,5):[],improvements:Array.isArray(parsed.improvements)?parsed.improvements.map(String).slice(0,5):[],feedback:String(parsed.feedback||"").slice(0,3000)};
+      return send(res,200,{assessment,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
     if(action==="english_eassessment_mark"){
       const assessment=validateEnglishMark(parseJson(content),Number(body.marks)||10);
       return send(res,200,{assessment,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});

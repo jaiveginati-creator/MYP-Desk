@@ -99,12 +99,14 @@ try {
   }
   await page.locator('#pageContent [data-page="science-eassessment"]').click();
   await page.getByRole("heading", { name: "E-assessment prep." }).waitFor();
+  if (!(await page.locator('[data-science-generate="full"]').isVisible())) throw new Error("Science e-assessment prep should generate a full AI paper.");
+  if (await page.locator("#science-ai-subject option").count() !== 4) throw new Error("Science AI practice should offer biology, chemistry, physics and mixed disciplines.");
   await page.locator('#pageContent [data-page="science-ad"]').click();
   await page.getByRole("heading", { name: "Criteria A & D practice." }).waitFor();
-  if (await page.locator(".science-practice-card textarea").count() !== 2) throw new Error("Criteria A & D should provide two written practice tasks.");
+  if (!(await page.locator('[data-science-generate="ad"]').isVisible())) throw new Error("Criteria A & D should provide AI-generated practice.");
   await page.locator('#navigation [data-page="science-bc"]').click();
   await page.getByRole("heading", { name: "Criteria B & C practice." }).waitFor();
-  if (await page.locator(".science-practice-card textarea").count() !== 2) throw new Error("Criteria B & C should provide two written practice tasks.");
+  if (!(await page.locator('[data-science-generate="bc"]').isVisible())) throw new Error("Criteria B & C should provide AI-generated practice.");
   await page.locator('#navigation [data-page="home"]').click();
   await page.locator("#pageContent .home-shell").waitFor();
   await page.locator('#pageContent [data-page="french"]').click();

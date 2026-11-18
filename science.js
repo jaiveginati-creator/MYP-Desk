@@ -179,18 +179,65 @@ function subject(subject){
 }
 function criteriaPage(which){
  const ad=which==="ad", title=ad?"Criteria A & D practice":"Criteria B & C practice";
- const intro=ad?"Build confidence with scientific knowledge, application, evidence and the impacts of science.":"Practise planning investigations, working with data, drawing conclusions and evaluating methods.";
- const tasks=ad?[
-  ["CRITERION A","Knowing and understanding","Apply scientific knowledge to explain a situation, interpret information and solve problems.","A city is considering replacing some street lighting with LED systems. Explain how energy transfers occur in a lamp, compare the energy use of two designs using supplied data, and justify which design is more efficient.","Use accurate scientific terms. Show working for calculations. Link each explanation to the information in the scenario."],
-  ["CRITERION D","Reflecting on the impacts of science","Discuss how science affects people, communities and the environment, using evidence and more than one perspective.","A new material could make packaging lighter, but it is difficult to recycle. Discuss the potential benefits and drawbacks of using it. Consider environmental, economic and social perspectives, and reach a justified conclusion.","Identify the scientific idea. Consider different stakeholders. Support claims with evidence and explain the limits of your conclusion."]
- ]:[
-  ["CRITERION B","Inquiring and designing","Develop a focused research question and plan a fair, safe and repeatable investigation.","A student wants to investigate how the length of a pendulum affects its period. Write a focused research question, state a testable hypothesis, identify the independent, dependent and controlled variables, and outline a suitable method.","Make variables measurable. Explain how repeated measurements improve reliability. Include relevant school-lab safety and equipment checks."],
-  ["CRITERION C","Processing and evaluating","Present and interpret data, explain patterns, draw conclusions and evaluate the investigation.","A class measures the cooling of warm water at regular time intervals. Describe how you would organise the results, choose a suitable graph, identify the trend, write a conclusion and evaluate possible sources of uncertainty.","Use units and suitable scales. Refer to data in your conclusion. Distinguish random variation from limitations in the method."]
- ];
- return `<div class="science-practice-page"><button class="science-back-link" data-page="sciences">← SCIENCE HOME</button><div class="eyebrow">MYP SCIENCES · ASSESSMENT PRACTICE</div><h1>${title}<span>.</span></h1><p class="intro">${intro}</p><div class="science-criteria-note"><strong>${ad?"A + D":"B + C"}</strong><span>${ad?"Knowledge, application and impact":"Investigation, data and evaluation"}</span></div><div class="science-practice-grid">${tasks.map((t,i)=>`<article class="science-practice-card"><div class="science-practice-card-top"><span>${t[0]}</span><span>0${i+1} / 02</span></div><h2>${t[1]}</h2><p>${t[2]}</p><div class="science-task-box"><span>PRACTICE SCENARIO</span><p>${t[3]}</p></div><label for="sciencePractice${which}${i}">Your response</label><textarea id="sciencePractice${which}${i}" rows="8" placeholder="Structure your answer using scientific language and evidence…"></textarea><div class="science-practice-tip"><strong>What to focus on</strong><p>${t[4]}</p></div><button class="science-copy-prompt" data-copy-science="${esc(t[3])}">COPY PRACTICE PROMPT</button></article>`).join("")}</div><p class="science-practice-disclaimer">These are original practice scenarios for revision, not official IB examination questions or mark schemes. Your responses stay in this page and are not submitted automatically.</p></div>`;
+ const intro=ad?"Generate original AI practice for scientific knowledge, application and the impacts of science.":"Generate original AI investigations and data tasks, then get feedback on your scientific method and analysis.";
+ return `<div class="science-practice-page"><button class="science-back-link" data-page="sciences">← SCIENCE HOME</button><div class="eyebrow">MYP SCIENCES · AI ASSESSMENT STUDIO</div><h1>${title}<span>.</span></h1><p class="intro">${intro}</p>${scienceControls(which)}<div id="science-ai-results" class="science-ai-results"><div class="science-ai-empty"><strong>Ready to practise.</strong>Choose a science discipline and generate a fresh set of original questions. Submit your answers for AI marking and criterion-specific feedback.</div></div></div>`;
+}
+function scienceControls(mode){
+ return `<div class="science-ai-controls"><label>DISCIPLINE<select id="science-ai-subject"><option value="mixed">Mixed sciences</option><option value="biology">Biology</option><option value="chemistry">Chemistry</option><option value="physics">Physics</option></select></label><label>LEVEL<select id="science-ai-level"><option>MYP 4</option><option selected>MYP 4–5</option><option>MYP 5</option></select></label><button class="science-ai-generate" data-science-generate="${mode}">Generate AI practice ↗</button></div>`;
 }
 function eassessment(){
- return `<div class="science-practice-page"><button class="science-back-link" data-page="sciences">← SCIENCE HOME</button><div class="eyebrow">MYP SCIENCES · EXAM READINESS</div><h1>E-assessment prep<span>.</span></h1><p class="intro">Practise the skills needed to interpret unfamiliar scientific situations, apply concepts and communicate a reasoned response.</p><div class="science-ea-overview"><div><span>01</span><strong>Understand</strong><small>Identify the scientific concepts in the context.</small></div><div><span>02</span><strong>Apply</strong><small>Use models, equations and evidence to answer the task.</small></div><div><span>03</span><strong>Evaluate</strong><small>Consider limitations, impacts and different perspectives.</small></div></div><div class="science-divider"><span>CHOOSE A PRACTICE ROUTE</span><span>CRITERIA A—D</span></div><div class="science-tools-grid"><button class="science-tool-card" data-page="science-ad"><span class="science-tool-number">A + D</span><span class="science-tool-icon">✳</span><strong>Knowledge & impact</strong><small>Apply scientific understanding and evaluate the implications of science.</small><b>START PRACTICE ↗</b></button><button class="science-tool-card" data-page="science-bc"><span class="science-tool-number">B + C</span><span class="science-tool-icon">⌁</span><strong>Investigation & data</strong><small>Design investigations, process results and evaluate evidence.</small><b>START PRACTICE ↗</b></button></div><div class="science-exam-tips"><h2>How to approach a science task</h2><ol><li>Read the whole context before answering. Highlight the command term and the information provided.</li><li>Identify which scientific concept or process is relevant.</li><li>Use evidence from the stimulus, data, diagrams or your calculations.</li><li>Explain your reasoning rather than listing disconnected facts.</li><li>Check units, labels, significant figures and whether your conclusion answers the question.</li></ol></div></div>`;
+ return `<div class="science-practice-page"><button class="science-back-link" data-page="sciences">← SCIENCE HOME</button><div class="eyebrow">MYP SCIENCES · EXAM READINESS</div><h1>E-assessment prep<span>.</span></h1><p class="intro">Generate an original MYP-style science assessment across all four criteria. Questions, scientific contexts and data are created by AI for each attempt.</p><div class="science-ea-overview"><div><span>01</span><strong>Understand</strong><small>Apply scientific concepts and explain processes.</small></div><div><span>02</span><strong>Investigate</strong><small>Plan methods and work with scientific data.</small></div><div><span>03</span><strong>Evaluate</strong><small>Analyse evidence and consider scientific impacts.</small></div></div><div class="science-tools-grid"><button class="science-tool-card" data-page="science-ad"><span class="science-tool-number">A + D</span><strong>Knowledge & impact</strong><small>Practise applying concepts and evaluating scientific impacts.</small><b>OPEN PRACTICE ↗</b></button><button class="science-tool-card" data-page="science-bc"><span class="science-tool-number">B + C</span><strong>Investigation & data</strong><small>Plan investigations, process results and evaluate evidence.</small><b>OPEN PRACTICE ↗</b></button></div>${scienceControls("full")}<div id="science-ai-results" class="science-ai-results"><div class="science-ai-empty"><strong>Your AI assessment is waiting.</strong>Choose a discipline and generate a complete practice paper covering Criteria A, B, C and D.</div></div><div class="science-exam-tips"><h2>How to approach a science task</h2><ol><li>Identify the command term and scientific concept.</li><li>Use evidence from the supplied context, data or diagram description.</li><li>Show calculations with units where needed.</li><li>Explain your reasoning and evaluate limitations or impacts.</li></ol></div></div>`;
+}
+function renderSciencePaper(paper){
+ window._mypScienceCurrentPaper=paper;
+ const tasks=paper.tasks||[];
+ return `<div class="science-ai-paper-head"><span>${esc(paper.level)} · ${esc(paper.subjectLabel)} · ${paper.totalMarks} MARKS</span><h2>${esc(paper.title)}</h2><p>Original AI-generated practice. Complete every response, then submit the paper for feedback.</p></div>${tasks.map((task,ti)=>`<article class="science-ai-task"><div class="science-ai-task-top"><span>CRITERION ${esc(task.criterion)} · ${esc(task.criterionName)}</span><strong>${task.marks} MARKS</strong></div><h3>${esc(task.title)}</h3><div class="science-ai-scenario"><span>SCIENTIFIC CONTEXT</span><p>${esc(task.scenario)}</p>${task.data?'<pre>'+esc(task.data)+'</pre>':''}</div>${task.questions.map((q,qi)=>`<div class="science-ai-question"><div><span>QUESTION ${ti+1}.${qi+1} · ${esc(q.commandTerm||"RESPOND")}</span><strong>${q.marks} MARKS</strong></div><h4>${esc(q.question)}</h4><textarea data-science-answer="${ti}-${qi}" rows="5" placeholder="Write your scientific response here…"></textarea><small>Focus: ${esc((q.successCriteria||[]).join(" · "))}</small></div>`).join("")}</article>`).join("")}<div class="science-ai-submit"><button class="science-ai-generate" id="science-ai-submit">Submit answers for AI marking ↗</button><p id="science-ai-status" aria-live="polite">AI will mark each response, calculate your score and give next steps.</p><div id="science-ai-total"></div></div>`;
+}
+async function generateSciencePractice(mode){
+ const root=document.getElementById("science-ai-results"),button=document.querySelector("[data-science-generate]");
+ if(!root||!button)return;
+ const subject=document.getElementById("science-ai-subject").value,level=document.getElementById("science-ai-level").value;
+ button.disabled=true;button.textContent="Generating with AI…";
+ root.innerHTML='<div class="science-ai-empty">Creating your original science practice. This may take a moment…</div>';
+ try{
+  const response=await fetch(window.PARLER_AI_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"science_eassessment",mode,subject,level})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not generate science practice.");
+  root.innerHTML=renderSciencePaper(data.paper);
+ }catch(error){root.innerHTML='<div class="science-ai-empty"><strong>Generation failed.</strong>'+esc(error.message||"Please try again.")+'</div>'}
+ finally{button.disabled=false;button.textContent="Generate AI practice ↗"}
+}
+async function submitSciencePractice(button){
+ const root=document.getElementById("science-ai-results"),status=document.getElementById("science-ai-status"),total=document.getElementById("science-ai-total");
+ if(!root||!button)return;
+ const paper=window._mypScienceCurrentPaper;
+ if(!paper){return}
+ button.disabled=true;button.textContent="AI is marking…";status.textContent="Assessing each answer against its question and available marks.";
+ let score=0,max=0,parts=[];
+ try{
+  for(let ti=0;ti<paper.tasks.length;ti++){
+   const task=paper.tasks[ti];
+   for(let qi=0;qi<task.questions.length;qi++){
+    const q=task.questions[qi],field=root.querySelector('[data-science-answer="'+ti+'-'+qi+'"]'),response=(field?.value||"").trim(),available=Number(q.marks)||0;
+    max+=available;
+    let assessment;
+    if(response.length<12){assessment={score:0,maxScore:available,strengths:[],improvements:["Develop your answer and include relevant scientific reasoning or evidence."],feedback:"There is not enough written evidence to assess this response reliably."};}
+    else{
+     const res=await fetch(window.PARLER_AI_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"science_eassessment_mark",level:paper.level,subject:paper.subject,criterion:task.criterion,criterionName:task.criterionName,taskTitle:task.title,scenario:task.scenario,data:task.data||"",question:q.question,marks:available,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],response})});
+     const data=await res.json();if(!res.ok||!data.assessment)throw new Error(data.error||"AI marking failed.");
+     assessment=data.assessment;
+    }
+    const earned=Math.max(0,Math.min(available,Number(assessment.score)||0));score+=earned;
+    parts.push({criterion:task.criterion,question:ti+"."+(qi+1),score:earned,max:available,assessment});
+    const feedback=document.createElement("div");feedback.className="science-ai-feedback";feedback.innerHTML='<div><strong>'+earned+' / '+available+'</strong><span>AI FEEDBACK</span></div><p>'+esc(assessment.feedback)+'</p><b>Strengths</b><ul>'+(assessment.strengths||[]).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul><b>Next steps</b><ul>'+(assessment.improvements||[]).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
+    field.insertAdjacentElement("afterend",feedback);
+   }
+  }
+  const percent=max?score/max*100:0,band=percent<10?1:percent<25?2:percent<40?3:percent<55?4:percent<70?5:percent<85?6:7;
+  total.innerHTML='<div class="science-ai-result-total"><span>YOUR PRACTICE RESULT</span><strong>'+score.toFixed(1)+' / '+max+'</strong><b>INDICATIVE BAND '+band+'</b><p>'+Math.round(percent)+'% · Use the criterion feedback to guide your revision. This is an AI practice estimate, not an official IB grade boundary.</p></div>';
+  status.textContent="All responses have been assessed.";
+  button.textContent="Assessment graded ✓";
+ }catch(error){status.textContent=error.message||"Marking failed. Please try again.";button.textContent="Retry AI marking ↗"}
+ finally{button.disabled=false}
 }
 function markup(page){
  if(page==="sciences")return hub();
