@@ -129,29 +129,35 @@ const EASSESSMENT_MARK_SCHEMA = {
 
 const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
 const SCIENCE_MARK_SCHEMA={type:"object",properties:{score:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","strengths","improvements","feedback"],additionalProperties:false};
-const SCIENCE_LESSON_SCHEMA={type:"object",properties:{objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},workedExample:{type:"string"},commonMisconception:{type:"string"},checkQuestion:{type:"string"},modelAnswer:{type:"string"}},required:["objectives","overview","sections","workedExample","commonMisconception","checkQuestion","modelAnswer"],additionalProperties:false};
+const SCIENCE_LESSON_SCHEMA={type:"object",properties:{objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},keyTerms:{type:"array",items:{type:"object",properties:{term:{type:"string"},definition:{type:"string"}},required:["term","definition"],additionalProperties:false}},visualModel:{type:"string"},workedExample:{type:"string"},commonMisconception:{type:"string"},examPractice:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},answerOutline:{type:"string"}},required:["question","marks","answerOutline"],additionalProperties:false}},checkQuestion:{type:"string"},modelAnswer:{type:"string"}},required:["objectives","overview","sections","keyTerms","visualModel","workedExample","commonMisconception","examPractice","checkQuestion","modelAnswer"],additionalProperties:false};
 function validateScienceLesson(data){
- if(!data||!Array.isArray(data.sections)||data.sections.length<3)throw new Error("The AI returned an incomplete lesson.");
+ if(!data||!Array.isArray(data.sections)||data.sections.length<4)throw new Error("The AI returned an incomplete lesson.");
  const text=value=>String(value||"").trim().slice(0,3500);
  const sections=data.sections.slice(0,6).map(section=>({heading:text(section.heading).slice(0,100),explanation:text(section.explanation)}));
- if(sections.some(section=>!section.heading||section.explanation.length<80))throw new Error("A lesson explanation was too short to be useful.");
- return {objectives:Array.isArray(data.objectives)?data.objectives.map(text).filter(Boolean).slice(0,5):[],overview:text(data.overview),sections,workedExample:text(data.workedExample),commonMisconception:text(data.commonMisconception),checkQuestion:text(data.checkQuestion),modelAnswer:text(data.modelAnswer)};
+ if(sections.some(section=>!section.heading||section.explanation.length<120))throw new Error("A lesson explanation was too short to be useful.");
+ const keyTerms=Array.isArray(data.keyTerms)?data.keyTerms.slice(0,8).map(item=>({term:text(item.term).slice(0,100),definition:text(item.definition)})):[];
+ if(keyTerms.length<4||keyTerms.some(item=>!item.term||item.definition.length<20))throw new Error("The lesson glossary was incomplete.");
+ const examPractice=Array.isArray(data.examPractice)?data.examPractice.slice(0,3).map(item=>({question:text(item.question),marks:Math.max(1,Math.min(8,Number(item.marks)||1)),answerOutline:text(item.answerOutline)})):[];
+ if(examPractice.length<2||examPractice.some(item=>!item.question||!item.answerOutline))throw new Error("The lesson exam practice was incomplete.");
+ return {objectives:Array.isArray(data.objectives)?data.objectives.map(text).filter(Boolean).slice(0,5):[],overview:text(data.overview),sections,keyTerms,visualModel:text(data.visualModel),workedExample:text(data.workedExample),commonMisconception:text(data.commonMisconception),examPractice,checkQuestion:text(data.checkQuestion),modelAnswer:text(data.modelAnswer)};
 }
 
 function validateSciencePaper(data,mode,subject,level){
- if(!data||!Array.isArray(data.tasks)||!data.tasks.length)throw new Error("The AI returned an incomplete science assessment.");
+ if(!data||!Array.isArray(data.tasks))throw new Error("The AI returned an incomplete science assessment.");
  const expected=mode==="full"?["A","B","C","D"]:mode==="ad"?["A","D"]:["B","C"];
- const tasks=data.tasks.slice(0,4).map(t=>{
-  if(!expected.includes(String(t.criterion))||!Array.isArray(t.questions)||!t.questions.length)throw new Error("A generated science criterion task is incomplete.");
-  const questions=t.questions.slice(0,4).map(q=>({question:String(q.question||"").slice(0,2400),marks:Math.max(1,Math.min(12,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
+ if(data.tasks.length!==expected.length)throw new Error("The generated assessment has the wrong number of criterion tasks.");
+ const tasks=data.tasks.map(t=>{
+  if(!expected.includes(String(t.criterion))||!Array.isArray(t.questions)||t.questions.length<3||t.questions.length>6)throw new Error("A generated science criterion task is incomplete.");
+  const questions=t.questions.map(q=>({question:String(q.question||"").slice(0,2400),marks:Math.max(1,Math.min(25,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
   if(questions.some(q=>!q.question.trim()))throw new Error("A science question is empty.");
   const marks=questions.reduce((sum,q)=>sum+q.marks,0);
-  if(marks!==20)throw new Error("Each science criterion task must total exactly 20 marks.");
-  return {criterion:String(t.criterion),criterionName:String(t.criterionName||"").slice(0,100),title:String(t.title||"Criterion task").slice(0,180),marks,scenario:String(t.scenario||"").slice(0,4500),data:String(t.data||"").slice(0,2500),questions};
+  if(marks!==25||Number(t.marks)!==25)throw new Error("Each science criterion task must total exactly 25 marks.");
+  return {criterion:String(t.criterion),criterionName:String(t.criterionName||"").slice(0,100),title:String(t.title||"Criterion task").slice(0,180),marks,scenario:String(t.scenario||"").slice(0,4500),data:String(t.data||"").slice(0,3500),questions};
  });
- if(expected.some(c=>!tasks.some(t=>t.criterion===c)))throw new Error("The generated assessment is missing a required criterion.");
+ if(expected.some(c=>!tasks.some(t=>t.criterion===c))||new Set(tasks.map(t=>t.criterion)).size!==expected.length)throw new Error("The generated assessment is missing or duplicating a required criterion.");
  const total=tasks.reduce((sum,t)=>sum+t.marks,0);
- return {title:String(data.title||"Science practice assessment").slice(0,180),subject,subjectLabel:subject==="mixed"?"Mixed sciences":subject[0].toUpperCase()+subject.slice(1),level,mode,totalMarks:total,tasks};
+ if(total!==expected.length*25)throw new Error("The generated assessment has an incorrect total mark value.");
+ return {title:String(data.title||"Science practice assessment").slice(0,180),subject,subjectLabel:subject==="mixed"?"Mixed sciences":subject[0].toUpperCase()+subject.slice(1),level,mode,totalMarks:total,durationMinutes:mode==="full"?120:60,tasks};
 }
 
 const ENGLISH_TASK_SCHEMA = {
@@ -393,8 +399,30 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
     const subject=["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed";
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     const criteria=mode==="full"?["A","B","C","D"]:mode==="ad"?["A","D"]:["B","C"];
-    const criterionGuides={A:"Knowing and understanding: apply scientific knowledge, explain concepts, interpret information and solve problems.",B:"Inquiring and designing: formulate research questions, hypotheses, variables and a valid, safe, repeatable method.",C:"Processing and evaluating: process data, identify patterns, draw evidence-based conclusions and evaluate methods.",D:"Reflecting on the impacts of science: discuss scientific applications and their social, ethical, economic and environmental implications using multiple perspectives."};
-    userContent=`Create an ORIGINAL MYP ${level} Sciences assessment for ${subject==="mixed"?"a balanced mix of biology, chemistry and physics":subject}. Assessment mode: ${mode}. Include exactly one task for each criterion: ${criteria.join(", ")}. Each task must include a rich, self-contained scientific scenario and 2–3 distinct questions. Total marks: 20 per criterion (divide marks across its questions, adding to exactly 20). Criteria guidance: ${criteria.map(c=>c+": "+criterionGuides[c]).join(" ")}. Include realistic supplied data as a compact text table in the data field when it helps; questions must be answerable from the scenario, supplied data and MYP-level scientific knowledge. Vary the scientific topic and context. Use clear command terms, age-appropriate MYP 4–5 language, and original material. Never copy past-paper questions. Return JSON with title, subject, subjectLabel, level, mode, totalMarks, tasks. Each task: criterion, criterionName, title, marks, scenario, data, questions. Each question: question, marks, commandTerm, successCriteria. Ensure every task's question marks total exactly 20. Return only JSON.`;
+    const criterionGuides={A:"Knowing and understanding: apply scientific knowledge accurately, interpret unfamiliar information, explain mechanisms and solve multi-step problems.",B:"Inquiring and designing: identify a focused research question, formulate a testable hypothesis with scientific reasoning, identify independent/dependent/controlled variables, and design a safe, valid, repeatable method with suitable apparatus, range, intervals and risk controls.",C:"Processing and evaluating: organise and process supplied raw data, show calculations with units, identify patterns and anomalies, describe relationships, draw evidence-based conclusions, evaluate reliability/validity and suggest specific improvements.",D:"Reflecting on the impacts of science: apply science to a real-world issue, discuss benefits, limitations and consequences, weigh social/environmental/economic/ethical perspectives, and support a justified conclusion."};
+    userContent=`Create an ORIGINAL MYP ${level} Sciences on-screen practice examination for ${subject==="mixed"?"a balanced mix of biology, chemistry and physics":subject}. Use the style and assessment principles of released MYP Sciences eAssessment specimen/past-paper materials and the published examination blueprint, but write entirely new scenarios, datasets, diagrams described in words and questions. Never reproduce or closely paraphrase protected paper wording or source material.
+STRUCTURE AND MARKS:
+- The full paper is 120 minutes and 100 marks: Criterion A = 25, Criterion B = 25, Criterion C = 25, Criterion D = 25.
+- Full mode: exactly four criterion tasks A, B, C and D (25 marks each).
+- A&D mode: exactly two tasks A and D (25 marks each; 50 marks total).
+- B&C mode: exactly two connected investigation tasks B and C (25 marks each; 50 marks total). B asks students to design an investigation; C then supplies results from that investigation for processing and evaluation.
+- In a full paper, B and C must form a coherent investigation pair using the same scientific context/research question.
+TASK DESIGN:
+- Each criterion task has 3–5 clearly numbered sub-questions whose marks add to exactly 25. Use a realistic spread of 3–10 marks per sub-question, not a set of repetitive one-mark recall items.
+- Each task begins with a substantial self-contained stimulus: a real-world scientific situation, relevant background, and enough information to understand the problem. Avoid generic one-sentence scenarios.
+- Supply meaningful evidence in the data field: tables with headings and units, observations, measurements, graph descriptions, labelled apparatus descriptions, or source extracts. Criterion C MUST include a plausible raw data table with at least five paired readings/conditions, units, and enough variation to analyse. Criterion B should give a research context but leave the student to design the method; do not give away the full method.
+- Use multiple source types across the paper where appropriate: data tables, graph descriptions, diagrams described in words, experimental observations, short scientific extracts and contextual information. Never refer to an image/video/animation that is not actually described in the paper.
+- Questions should build logically from interpretation to application, analysis, evaluation or justified decisions. Make students use the supplied stimulus, not simply recite definitions. Include calculations only when suitable and provide all required values/constants.
+- Use authentic MYP command terms (for example state, identify, describe, explain, calculate, construct, interpret, compare, evaluate, justify, suggest, outline). Match the command term to the marks and expected depth.
+CRITERION FOCUS:
+${criteria.map(c=>c+": "+criterionGuides[c]).join("\\n")}
+QUALITY CONTROL:
+- All science must be accurate and appropriate for ${level}; do not introduce unexplained advanced content.
+- Every question must be answerable using the supplied stimulus/data and appropriate MYP science knowledge.
+- Data must be internally consistent, plausible, clearly labelled and use units. Do not fabricate citations or claim the scenario is a real study.
+- Vary topics across attempts and avoid reusing the same generic solar-panel/plant-growth contexts.
+- Return ONLY valid JSON with title, subject, subjectLabel, level, mode, totalMarks, tasks. Each task: criterion, criterionName, title, marks, scenario, data, questions. Each question: question, marks, commandTerm, successCriteria.
+- Each task must contain 3–5 questions adding to exactly 25 marks; totalMarks must be ${criteria.length*25}. Do not include answer keys or model answers in the student paper.`;
     responseFormat=strictJsonFormat("science_practice_paper",SCIENCE_PAPER_SCHEMA);
   }
   if(action==="science_lesson"){
@@ -403,11 +431,21 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
     const title=cleanText(body.title,180),summary=cleanText(body.summary,600);
     const points=Array.isArray(body.points)?body.points.map(value=>cleanText(value,500)).filter(Boolean).slice(0,5):[];
     if(!title||!summary||points.length<2)return send(res,400,{error:"A lesson title, summary and key ideas are required."});
-    userContent=`Write a complete, clear MYP ${level} ${discipline} lesson titled "${title}". Use the supplied lesson outline as the factual scope. Explain each idea in depth with accurate scientific reasoning, useful definitions, cause-and-effect links and age-appropriate examples. Do not merely repeat the bullet points. Do not invent data or claim an experiment was performed. Make it self-contained for independent study.
-Lesson summary: ${summary}
-Required key ideas:
+    userContent=`Write a high-quality, self-contained MYP ${level} ${discipline} textbook lesson titled "${title}". The current outline identifies the scope, not the full explanation. Expand it into a genuinely teachable lesson for a student learning independently for the first time. Use accurate MYP-level scientific knowledge to explain the ideas, while keeping the lesson focused on the supplied topic and key ideas. Do not merely restate bullets, pad with generic statements, invent experimental results, or claim an experiment was performed.
+LESSON OUTLINE
+Summary: ${summary}
+Key ideas:
 ${points.map((point,index)=>(index+1)+". "+point).join("\\n")}
-Return JSON with objectives (3–4 measurable objectives); overview (90–140 words); sections (3–5 ordered sections, each 100–170 words); workedExample (80–140 words, step-by-step application); commonMisconception (40–80 words, misconception and correction); checkQuestion (one application question); modelAnswer (concise model answer). Every section must teach a specific idea and stay consistent with the supplied outline.`;
+TEACHING QUALITY:
+- Begin with a clear overview that explains what the topic is, why it matters and how its main ideas connect.
+- Write 4–5 ordered concept sections, each about 140–190 words. Each section must teach a distinct idea with precise definitions, step-by-step mechanisms where relevant, cause-and-effect reasoning, a concrete example/application, and links to earlier concepts. Explain specialist vocabulary when it first appears.
+- Include 4–7 key terms with accurate, student-friendly definitions.
+- Include a useful visualModel: describe a labelled diagram, flow chart, particle model, circuit, graph or process that a student could draw. Explain what each part/arrow/axis represents; do not pretend an image is attached.
+- Give a workedExample (100–160 words) that demonstrates how to apply the science, including equations, substitutions and units where appropriate. If no calculation fits, use a worked explanation of a real application.
+- Explain one common misconception and correct it clearly (60–100 words).
+- Add 2–3 original examPractice questions with marks and a short answerOutline for revision. Vary command terms and include at least one application or data-based question where appropriate.
+- Finish with one checkQuestion that tests transfer/application and a concise modelAnswer that explains the reasoning.
+Return JSON with objectives (3–5 measurable outcomes), overview (130–170 words), sections (4–5 ordered sections, each 140–190 words), keyTerms, visualModel, workedExample, commonMisconception, examPractice, checkQuestion and modelAnswer. Use natural paragraphs, not bullet-point fragments, inside each explanation. Keep all content accurate, age-appropriate and coherent with the topic.`;
     responseFormat=strictJsonFormat("science_lesson",SCIENCE_LESSON_SCHEMA);
   }
 
@@ -480,7 +518,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
           temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: ["eassessment","science_eassessment","science_lesson"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          max_completion_tokens: ["eassessment","science_eassessment","science_lesson"].includes(action) ? 14000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
           ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
@@ -511,7 +549,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     if(action==="science_eassessment_mark"){
       const parsed=parseJson(content);
       if(!parsed||!Number.isFinite(Number(parsed.score)))throw new Error("The AI returned invalid science feedback.");
-      const maximum=Math.max(1,Math.min(12,Number(body.marks)||5));
+      const maximum=Math.max(1,Math.min(25,Number(body.marks)||5));
       const assessment={score:Math.max(0,Math.min(maximum,Math.round(Number(parsed.score)))),maxScore:maximum,strengths:Array.isArray(parsed.strengths)?parsed.strengths.map(String).slice(0,5):[],improvements:Array.isArray(parsed.improvements)?parsed.improvements.map(String).slice(0,5):[],feedback:String(parsed.feedback||"").slice(0,3000)};
       return send(res,200,{assessment,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
     }
