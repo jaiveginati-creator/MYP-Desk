@@ -58,45 +58,74 @@ try {
     await page.getByRole("heading", { name: heading }).waitFor();
     if (target === "individuals-societies") {
       await page.locator(".is-shell").waitFor();
-      if (await page.locator(".is-criterion-card").count() !== 4) throw new Error("I&S overview should show four separate criterion sections.");
-      if (await page.locator(".is-tab").count() !== 6) throw new Error("I&S should have overview, four criteria and a full-paper section.");
+      if (await page.locator(".is-criterion-card").count() !== 4) throw new Error("I&S overview should show four criterion skills drills.");
+      if (await page.locator(".is-task-card").count() !== 3) throw new Error("I&S overview should show the three examination tasks.");
+      if (await page.locator(".is-tab").count() !== 9) throw new Error("I&S should show overview, three tasks, four criterion drills and full paper.");
       if (await page.locator(".is-discipline-tab").count() !== 3) throw new Error("I&S should offer History, Geography and Integrated Humanities pathways.");
       await page.evaluate(() => {
         window.fetch = async (_url, options) => {
           const request = JSON.parse(options.body);
           if (!["history","geography","integrated"].includes(request.discipline)) throw new Error("I&S generation must include the selected discipline.");
-          const criteria = request.mode === "full" ? ["A","B","C","D"] : [request.mode];
-          const names = {A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
-          const tasks = criteria.map(criterion => ({criterion,criterionName:names[criterion],title:"Practice task "+criterion,marks:25,sourceTitle:"Sample source",sourceText:"This is an original fictional case study with enough contextual information for students to interpret the situation, identify evidence and answer the related questions. It is included only to test the paper renderer.",questions:[{question:"Identify one important feature shown in the source.",marks:5,commandTerm:"Identify",successCriteria:["Select a relevant detail"]},{question:"Explain a factor that contributed to the situation.",marks:10,commandTerm:"Explain",successCriteria:["Use evidence from the source","Explain a relevant cause or consequence"]},{question:"Evaluate the significance of the issue.",marks:10,commandTerm:"Evaluate",successCriteria:["Consider more than one perspective","Reach a justified conclusion"]}]}));
-          return {ok:true,json:async()=>({paper:{title:"Mock I&S practice paper",topicLabel:request.topic,level:request.level,mode:request.mode,totalMarks:criteria.length*25,durationMinutes:request.mode==="full"?120:30,tasks}})};
+          const sourceText = "This fictional source pack describes a town undergoing rapid change. It contains a background account, contrasting residents' viewpoints, a set of clearly labelled invented figures and information about the organisations involved. Students can use it to formulate a research question, consider methods, communicate findings for a defined audience and analyse evidence, arguments and perspectives. All information is invented for this practice test.";
+          const successCriteria = ["Use accurate evidence from the supplied source.","Explain the reasoning and connect it to the question."];
+          const markscheme = ["Credit a relevant, accurate point supported by source evidence.","Credit clear explanation, justified reasoning or an appropriate example."];
+          const q = (criterion, marks) => ({criterion,marks,question:"Explain a relevant issue using evidence from the source.",commandTerm:"Explain",successCriteria,markscheme});
+          const task = (taskId,taskName,marks,criterionMarks,questions) => ({taskId,taskName,marks,criterionMarks,title:taskName+" practice task",sourceTitle:"Fictional source pack: a changing town",sourceText,questions});
+          const all = [
+            task("investigating","Investigating",26,{A:6,B:20,C:0,D:0},[q("A",6),q("B",10),q("B",10)]),
+            task("communicating","Communicating",18,{A:6,B:0,C:12,D:0},[q("A",6),q("C",6),q("C",6)]),
+            task("thinking","Thinking critically",36,{A:8,B:0,C:8,D:20},[q("A",8),q("C",8),q("D",10),q("D",10)])
+          ];
+          let tasks;
+          if (request.mode === "full") tasks = all;
+          else if (["investigating","communicating","thinking"].includes(request.mode)) tasks = all.filter(t => t.taskId === request.mode);
+          else {
+            const criterion = request.mode.slice(-1), breakdown = {A:0,B:0,C:0,D:0};
+            breakdown[criterion] = 20;
+            tasks = [task("criterion-"+criterion,"Criterion "+criterion+" practice",20,breakdown,[q(criterion,6),q(criterion,7),q(criterion,7)])];
+          }
+          const totalMarks = tasks.reduce((sum,t) => sum + t.marks,0);
+          return {ok:true,json:async()=>({paper:{title:"Mock I&S practice paper",topicLabel:request.topic,level:request.level,mode:request.mode,totalMarks,durationMinutes:request.mode==="full"?120:30,tasks}})};
         };
       });
       for (const [discipline,label] of [["history","History"],["geography","Geography"],["integrated","Integrated Humanities"]]) {
         await page.locator('[data-is-discipline="' + discipline + '"]').click();
         if (!(await page.locator(".is-pathway-description").textContent()).length) throw new Error(label+" pathway should explain its subject focus.");
         await page.locator('.is-tab[data-is-tab="full"]').click();
-        const options = await page.locator("#is-topic option").allTextContents();
-        if (!options.length) throw new Error(label+" should provide its own topic list.");
+        if (!(await page.locator("#is-topic option").count())) throw new Error(label+" should provide its own topic list.");
         await page.locator('[data-is-generate="full"]').click();
         await page.locator(".is-paper-head").waitFor();
-        if (await page.locator(".is-task").count() !== 4) throw new Error(label+" full paper should contain all four criteria.");
+        if (await page.locator(".is-task").count() !== 3) throw new Error(label+" full paper should contain exactly three tasks.");
         if (!(await page.locator(".is-paper-head").textContent()).includes(label)) throw new Error(label+" paper should identify its selected discipline.");
+        if (!(await page.locator(".is-paper-head").textContent()).includes("80 MARKS")) throw new Error(label+" full paper should total 80 marks.");
+        const taskMarks = await page.locator(".is-task .is-task-top b").allTextContents();
+        if (taskMarks.join("|") !== "26 MARKS|18 MARKS|36 MARKS") throw new Error(label+" tasks should be worth 26, 18 and 36 marks.");
+        if (await page.locator(".is-markscheme").count() !== 10) throw new Error(label+" full paper should render indicative markschemes for each question.");
       }
       await page.locator('[data-is-discipline="integrated"]').click();
-      await page.locator('[data-is-tab="overview"]').click();
-      for (const criterion of ["A","B","C","D"]) {
-        await page.locator('.is-tab[data-is-tab="' + criterion + '"]').click();
-        if (!(await page.locator('[data-is-generate="' + criterion + '"]').isVisible())) throw new Error("Criterion "+criterion+" should provide its own AI paper generator.");
-        await page.locator('[data-is-generate="' + criterion + '"]').click();
+      for (const mode of ["investigating","communicating","thinking"]) {
+        await page.locator('.is-tab[data-is-tab="' + mode + '"]').click();
+        await page.locator('[data-is-generate="' + mode + '"]').click();
         await page.locator(".is-paper-head").waitFor();
-        if (await page.locator(".is-task").count() !== 1) throw new Error("Criterion "+criterion+" should generate one 25-mark task.");
+        if (await page.locator(".is-task").count() !== 1) throw new Error(mode+" should generate one task.");
+        const expected = {investigating:"26 MARKS",communicating:"18 MARKS",thinking:"36 MARKS"}[mode];
+        if (!(await page.locator(".is-task .is-task-top b").textContent()).includes(expected)) throw new Error(mode+" task has the wrong mark total.");
+      }
+      for (const criterion of ["A","B","C","D"]) {
+        const mode = "criterion-"+criterion;
+        await page.locator('.is-tab[data-is-tab="' + mode + '"]').click();
+        if (!(await page.locator('[data-is-generate="' + mode + '"]').isVisible())) throw new Error("Criterion "+criterion+" should provide a standalone skills drill.");
+        await page.locator('[data-is-generate="' + mode + '"]').click();
+        await page.locator(".is-paper-head").waitFor();
+        if (await page.locator(".is-task").count() !== 1) throw new Error("Criterion "+criterion+" should generate one skills drill.");
+        if (!(await page.locator(".is-paper-head").textContent()).includes("20 MARKS")) throw new Error("Criterion "+criterion+" drill should total 20 marks.");
       }
       await page.locator('.is-tab[data-is-tab="full"]').click();
       await page.locator('[data-is-generate="full"]').click();
       await page.locator(".is-paper-head").waitFor();
-      if (await page.locator(".is-task").count() !== 4) throw new Error("The full I&S paper should contain all four criteria.");
-      if (await page.locator(".is-question textarea").count() !== 12) throw new Error("The full I&S paper should render answer spaces for all questions.");
-      if (!(await page.locator(".is-paper-head").textContent()).includes("100 MARKS")) throw new Error("The full I&S paper should total 100 marks.");
+      if (await page.locator(".is-task").count() !== 3) throw new Error("The full I&S paper should contain three tasks.");
+      if (await page.locator(".is-question textarea").count() !== 10) throw new Error("The full I&S paper should render answer spaces for all ten questions.");
+      if (!(await page.locator(".is-paper-head").textContent()).includes("80 MARKS")) throw new Error("The full I&S paper should total 80 marks.");
     }
     if (target === "language-literature") {
       if (await page.locator("[data-eng-tab]").count() !== 4) throw new Error("English workspace should have four assessment tabs.");
