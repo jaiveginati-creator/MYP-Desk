@@ -495,7 +495,7 @@ Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     const answers=Array.isArray(body.answers)?body.answers.slice(0,24):[];
     if(!answers.length)return send(res,400,{error:"No mathematics answers were supplied."});
-    if(answers.some(a=>!cleanText(a.question,2200)||!cleanText(a.response,8000)))return send(res,400,{error:"Answer every question before requesting marking."});
+    if(answers.some(a=>!cleanText(a.question,2200)))return send(res,400,{error:"A mathematics question is missing."});
     userContent=`Give formative AI marking for these MYP ${level} Mathematics practice answers. This is a learning estimate, not an official IB grade. Return one assessment for each answer, in the exact same order.
 Assess only the mathematics demonstrated. Check numerical accuracy, algebraic steps, method selection, notation, units, reasoning and interpretation as relevant to the criterion and command term. Award partial credit when valid working is shown even if the final answer is wrong. Do not award marks for unsupported final answers where working is required. Do not penalise a correct alternative method. If the student response is blank or too incomplete, award zero and explain what is missing. Keep feedback specific and encouraging.
 ANSWERS:
