@@ -129,6 +129,15 @@ const EASSESSMENT_MARK_SCHEMA = {
 
 const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
 const SCIENCE_MARK_SCHEMA={type:"object",properties:{score:{type:"number"},strengths:{type:"array",items:{type:"string"}},improvements:{type:"array",items:{type:"string"}},feedback:{type:"string"}},required:["score","strengths","improvements","feedback"],additionalProperties:false};
+const SCIENCE_LESSON_SCHEMA={type:"object",properties:{objectives:{type:"array",items:{type:"string"}},overview:{type:"string"},sections:{type:"array",items:{type:"object",properties:{heading:{type:"string"},explanation:{type:"string"}},required:["heading","explanation"],additionalProperties:false}},workedExample:{type:"string"},commonMisconception:{type:"string"},checkQuestion:{type:"string"},modelAnswer:{type:"string"}},required:["objectives","overview","sections","workedExample","commonMisconception","checkQuestion","modelAnswer"],additionalProperties:false};
+function validateScienceLesson(data){
+ if(!data||!Array.isArray(data.sections)||data.sections.length<3)throw new Error("The AI returned an incomplete lesson.");
+ const text=value=>String(value||"").trim().slice(0,3500);
+ const sections=data.sections.slice(0,6).map(section=>({heading:text(section.heading).slice(0,100),explanation:text(section.explanation)}));
+ if(sections.some(section=>!section.heading||section.explanation.length<80))throw new Error("A lesson explanation was too short to be useful.");
+ return {objectives:Array.isArray(data.objectives)?data.objectives.map(text).filter(Boolean).slice(0,5):[],overview:text(data.overview),sections,workedExample:text(data.workedExample),commonMisconception:text(data.commonMisconception),checkQuestion:text(data.checkQuestion),modelAnswer:text(data.modelAnswer)};
+}
+
 function validateSciencePaper(data,mode,subject,level){
  if(!data||!Array.isArray(data.tasks)||!data.tasks.length)throw new Error("The AI returned an incomplete science assessment.");
  const expected=mode==="full"?["A","B","C","D"]:mode==="ad"?["A","D"]:["B","C"];
@@ -334,9 +343,9 @@ export default async function handler(req, res) {
     body: cleanText(note && note.body, MAX_NOTES_CHARS)
   })).filter(note => note.body) : [];
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
-  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
+  if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
@@ -388,6 +397,20 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
     userContent=`Create an ORIGINAL MYP ${level} Sciences assessment for ${subject==="mixed"?"a balanced mix of biology, chemistry and physics":subject}. Assessment mode: ${mode}. Include exactly one task for each criterion: ${criteria.join(", ")}. Each task must include a rich, self-contained scientific scenario and 2–3 distinct questions. Total marks: 20 per criterion (divide marks across its questions, adding to exactly 20). Criteria guidance: ${criteria.map(c=>c+": "+criterionGuides[c]).join(" ")}. Include realistic supplied data as a compact text table in the data field when it helps; questions must be answerable from the scenario, supplied data and MYP-level scientific knowledge. Vary the scientific topic and context. Use clear command terms, age-appropriate MYP 4–5 language, and original material. Never copy past-paper questions. Return JSON with title, subject, subjectLabel, level, mode, totalMarks, tasks. Each task: criterion, criterionName, title, marks, scenario, data, questions. Each question: question, marks, commandTerm, successCriteria. Ensure every task's question marks total exactly 20. Return only JSON.`;
     responseFormat=strictJsonFormat("science_practice_paper",SCIENCE_PAPER_SCHEMA);
   }
+  if(action==="science_lesson"){
+    const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
+    const discipline=["biology","chemistry","physics"].includes(body.subject)?body.subject:"science";
+    const title=cleanText(body.title,180),summary=cleanText(body.summary,600);
+    const points=Array.isArray(body.points)?body.points.map(value=>cleanText(value,500)).filter(Boolean).slice(0,5):[];
+    if(!title||!summary||points.length<2)return send(res,400,{error:"A lesson title, summary and key ideas are required."});
+    userContent=`Write a complete, clear MYP ${level} ${discipline} lesson titled "${title}". Use the supplied lesson outline as the factual scope. Explain each idea in depth with accurate scientific reasoning, useful definitions, cause-and-effect links and age-appropriate examples. Do not merely repeat the bullet points. Do not invent data or claim an experiment was performed. Make it self-contained for independent study.
+Lesson summary: ${summary}
+Required key ideas:
+${points.map((point,index)=>(index+1)+". "+point).join("\\n")}
+Return JSON with objectives (3–4 measurable objectives); overview (90–140 words); sections (3–5 ordered sections, each 100–170 words); workedExample (80–140 words, step-by-step application); commonMisconception (40–80 words, misconception and correction); checkQuestion (one application question); modelAnswer (concise model answer). Every section must teach a specific idea and stay consistent with the supplied outline.`;
+    responseFormat=strictJsonFormat("science_lesson",SCIENCE_LESSON_SCHEMA);
+  }
+
   if(action==="science_eassessment_mark"){
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     const maxMarks=Math.max(1,Math.min(12,Number(body.marks)||5));
@@ -413,7 +436,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     const style = ["mixed", "multiple", "short"].includes(body.style) ? body.style : "mixed";
     userContent = `Create a ${count}-question practice quiz based STRICTLY on facts and relationships explicitly stated in these notes. Style: ${style}. Do not use outside knowledge, assumptions, or questions that require unstated comparisons or inferences. Use clear MYP-level recall and understanding questions. Include a correct answer and a short explanation supported by the notes for every question. For multiple-choice questions, include exactly four distinct options and a zero-based correctIndex. For short-answer questions, use an empty options array and include 3–5 acceptedAnswers that express the same correct idea in different natural wording. Return ONLY valid JSON in this shape: {"questions":[{"question":"...","options":["..."],"answer":"...","correctIndex":0,"acceptedAnswers":["..."],"explanation":"..."}]}. Notes:\n\n${notesText}`;
     responseFormat = { type: "json_object" };
-  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) {
+  } else if (!["eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) {
     const task = {
       explain: notes.length
         ? `Explain this clearly for an ${grade} student: ${prompt}. Use 2–4 short connected paragraphs, answer directly, and define only necessary terms. Stay faithful to the selected notes; do not add unrelated detail. For photosynthesis, accurately state that chlorophyll absorbs mainly red and blue light and reflects much of the green light. Include a simple example only when useful. No headings, bullets, numbered lists, tables, or quiz.`
@@ -431,11 +454,6 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
 
   try {
 
-    if(action==="science_eassessment"){
-      const parsed=parseJson(content);
-      const paper=validateSciencePaper(parsed,["full","ad","bc"].includes(body.mode)?body.mode:"full",["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed",["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5");
-      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
-    }
     if(action==="english_eassessment"){
       const requestedType=["type1","type2","type3","full"].includes(body.taskType)?body.taskType:"type1";
       const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
@@ -462,7 +480,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
         body: JSON.stringify({
           model: process.env.GROQ_MODEL || DEFAULT_MODEL,
           temperature: action === "quiz" ? 0.35 : ["reading","eassessment","science_eassessment"].includes(action) ? 0.65 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 0.25 : 0.55,
-          max_completion_tokens: ["eassessment","science_eassessment"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
+          max_completion_tokens: ["eassessment","science_eassessment","science_lesson"].includes(action) ? 10000 : ["eassessment_mark","english_eassessment_mark","science_eassessment_mark"].includes(action) ? 2200 : action === "quiz" ? 5000 : action === "reading" ? 4500 : 3000,
           ...(["eassessment","eassessment_mark","english_eassessment","english_eassessment_mark"].includes(action) ? { reasoning_effort: "low" } : {}),
           ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [{ role: "system", content: system }, { role: "user", content: attemptContent }]
@@ -481,6 +499,15 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     }
 
 
+    if(action==="science_eassessment"){
+      const parsed=parseJson(content);
+      const paper=validateSciencePaper(parsed,["full","ad","bc"].includes(body.mode)?body.mode:"full",["biology","chemistry","physics","mixed"].includes(body.subject)?body.subject:"mixed",["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5");
+      return send(res,200,{paper,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
+    if(action==="science_lesson"){
+      const lesson=validateScienceLesson(parseJson(content));
+      return send(res,200,{lesson,provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
+    }
     if(action==="science_eassessment_mark"){
       const parsed=parseJson(content);
       if(!parsed||!Number.isFinite(Number(parsed.score)))throw new Error("The AI returned invalid science feedback.");
