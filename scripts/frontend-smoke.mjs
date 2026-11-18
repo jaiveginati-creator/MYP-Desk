@@ -29,6 +29,8 @@ const englishSyntax = spawnSync(process.execPath, ["--check", "english-assessmen
 if (englishSyntax.status !== 0) throw new Error("English assessment frontend failed syntax check:\n" + englishSyntax.stderr);
 const scienceSyntax = spawnSync(process.execPath, ["--check", "science.js"], { encoding: "utf8" });
 if (scienceSyntax.status !== 0) throw new Error("Science frontend failed syntax check:\n" + scienceSyntax.stderr);
+const isSyntax = spawnSync(process.execPath, ["--check", "individuals-societies.js"], { encoding: "utf8" });
+if (isSyntax.status !== 0) throw new Error("Individuals & Societies frontend failed syntax check:\n" + isSyntax.stderr);
 const apiTests = spawnSync(process.execPath, ["--test"], { encoding: "utf8" });
 if (apiTests.status !== 0) throw new Error("E-assessment API tests failed:\\n" + apiTests.stdout + apiTests.stderr);
 
