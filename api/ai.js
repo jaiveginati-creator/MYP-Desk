@@ -345,7 +345,7 @@ export default async function handler(req, res) {
   const totalChars = notes.reduce((sum, note) => sum + note.title.length + note.body.length, 0);
   if (!notes.length && !["explain", "ask", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) return send(res, 400, { error: "Select at least one non-empty note for this tool." });
   if (totalChars > MAX_NOTES_CHARS) return send(res, 413, { error: "The selected notes are too long. Select fewer notes and try again." });
-  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark"].includes(action)) {
+  if (!["explain", "summarise", "flashcards", "study-guide", "ask", "quiz", "reading", "eassessment", "eassessment_mark", "english_eassessment", "english_eassessment_mark", "science_eassessment", "science_eassessment_mark", "science_lesson"].includes(action)) {
     return send(res, 400, { error: "Unknown AI action." });
   }
 
