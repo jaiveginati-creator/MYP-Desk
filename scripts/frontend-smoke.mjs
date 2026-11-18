@@ -65,7 +65,7 @@ try {
           const request = JSON.parse(options.body);
           const criteria = request.mode === "full" ? ["A","B","C","D"] : [request.mode];
           const names = {A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
-          const tasks = criteria.map(criterion => ({criterion,criterionName:names[criterion],title:"Practice task "+criterion,marks:25,sourceTitle:"Sample source",sourceText:"This is an original fictional case study with enough contextual information for students to interpret the situation, identify evidence and answer the related questions. It is included only to test the paper renderer.",questions:[{question:"Explain one important factor shown in the source.",marks:10,commandTerm:"Explain",successCriteria:["Use evidence from the source","Explain a relevant cause or consequence"]},{question:"Evaluate the significance of the issue.",marks:15,commandTerm:"Evaluate",successCriteria:["Consider more than one perspective","Reach a justified conclusion"]}]}));
+          const tasks = criteria.map(criterion => ({criterion,criterionName:names[criterion],title:"Practice task "+criterion,marks:25,sourceTitle:"Sample source",sourceText:"This is an original fictional case study with enough contextual information for students to interpret the situation, identify evidence and answer the related questions. It is included only to test the paper renderer.",questions:[{question:"Identify one important feature shown in the source.",marks:5,commandTerm:"Identify",successCriteria:["Select a relevant detail"]},{question:"Explain a factor that contributed to the situation.",marks:10,commandTerm:"Explain",successCriteria:["Use evidence from the source","Explain a relevant cause or consequence"]},{question:"Evaluate the significance of the issue.",marks:10,commandTerm:"Evaluate",successCriteria:["Consider more than one perspective","Reach a justified conclusion"]}]}));
           return {ok:true,json:async()=>({paper:{title:"Mock I&S practice paper",topicLabel:request.topic,level:request.level,mode:request.mode,totalMarks:criteria.length*25,durationMinutes:request.mode==="full"?120:30,tasks}})};
         };
       });
@@ -80,7 +80,7 @@ try {
       await page.locator('[data-is-generate="full"]').click();
       await page.locator(".is-paper-head").waitFor();
       if (await page.locator(".is-task").count() !== 4) throw new Error("The full I&S paper should contain all four criteria.");
-      if (await page.locator(".is-question textarea").count() !== 8) throw new Error("The full I&S paper should render answer spaces for all questions.");
+      if (await page.locator(".is-question textarea").count() !== 12) throw new Error("The full I&S paper should render answer spaces for all questions.");
       if (!(await page.locator(".is-paper-head").textContent()).includes("100 MARKS")) throw new Error("The full I&S paper should total 100 marks.");
     }
     if (target === "language-literature") {
