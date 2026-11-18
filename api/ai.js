@@ -156,7 +156,7 @@ function validateSciencePaper(data,mode,subject,level){
  });
  if(expected.some(c=>!tasks.some(t=>t.criterion===c))||new Set(tasks.map(t=>t.criterion)).size!==expected.length)throw new Error("The generated assessment is missing or duplicating a required criterion.");
  const total=tasks.reduce((sum,t)=>sum+t.marks,0);
- if(total!==expected.length*25)throw new Error("The generated assessment has an incorrect total mark value.");
+ if(total!==expected.length*25||Number(data.totalMarks)!==expected.length*25)throw new Error("The generated assessment has an incorrect total mark value.");
  return {title:String(data.title||"Science practice assessment").slice(0,180),subject,subjectLabel:subject==="mixed"?"Mixed sciences":subject[0].toUpperCase()+subject.slice(1),level,mode,totalMarks:total,durationMinutes:mode==="full"?120:60,tasks};
 }
 
@@ -451,7 +451,7 @@ Return JSON with objectives (3–5 measurable outcomes), overview (130–170 wor
 
   if(action==="science_eassessment_mark"){
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
-    const maxMarks=Math.max(1,Math.min(12,Number(body.marks)||5));
+    const maxMarks=Math.max(1,Math.min(25,Number(body.marks)||5));
     const response=cleanText(body.response,14000),question=cleanText(body.question,2600);
     if(!question||response.length<12)return send(res,400,{error:"Write your science response before requesting feedback."});
     userContent=`Give formative AI marking for this MYP ${level} Sciences response. Subject: ${cleanText(body.subject,40)}. Criterion ${cleanText(body.criterion,1)} — ${cleanText(body.criterionName,100)}. Task: ${cleanText(body.taskTitle,180)}. Scientific context: ${cleanText(body.scenario,4000)}. Supplied data: ${cleanText(body.data,2200)}. Question: ${question}. Command term: ${cleanText(body.commandTerm,60)}. Available marks: ${maxMarks}. Success criteria: ${JSON.stringify(Array.isArray(body.successCriteria)?body.successCriteria.slice(0,5):[])}. Student response: ${response}. Assess only demonstrated understanding. Apply the criterion accurately: A scientific accuracy/application/reasoning; B research question, hypothesis, variables and method; C data processing, interpretation, conclusion and evaluation; D balanced discussion of scientific impacts and perspectives. Do not reward length alone or invent mistakes. Give clear, specific, encouraging feedback in English. This is practice feedback, not an official IB grade. Return JSON with score (0 to ${maxMarks}), strengths, improvements and feedback.`;
