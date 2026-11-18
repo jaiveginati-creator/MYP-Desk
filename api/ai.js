@@ -815,6 +815,6 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
     const formattedText = action === "flashcards" ? formatFlashcards(content) : String(content).trim();
     return send(res, 200, { text: formattedText, provider: "groq", model: process.env.GROQ_MODEL || DEFAULT_MODEL });
   } catch (error) {
-    return send(res, (error && error.statusCode) || 502, { error: error && error.message ? error.message : "The AI request failed." });
+    return send(res, (error && error.statusCode) || 502, { error: error && error.message ? error.message : "The AI request failed.", debugStack: process.env.NODE_ENV === "test" ? error.stack : undefined });
   }
 }
