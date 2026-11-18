@@ -589,6 +589,14 @@ Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improv
     const criterionMode=mode.startsWith("criterion-");
     const taskGuidance=criterionMode?{[mode]:{name:"Criterion "+mode.slice(-1)+" practice",marks:20,criteria:{A:0,B:0,C:0,D:0,...{[mode.slice(-1)]:20}},focus:"Create a focused criterion skills drill with source material and 3–5 structured questions totalling 20 marks."}}:Object.fromEntries(selectedTasks.map(key=>[key,IS_TASKS[key]]));
     const chosenMarks=Object.values(taskGuidance).reduce((sum,t)=>sum+t.marks,0);
+    const questionPlans={
+      investigating:"Exactly 5 questions in this order: Criterion A = 2 marks, Criterion A = 4 marks, Criterion B = 5 marks, Criterion B = 5 marks, Criterion B = 10 marks.",
+      communicating:"Exactly 5 questions in this order: Criterion A = 2 marks, Criterion A = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks.",
+      thinking:"Exactly 7 questions in this order: Criterion A = 4 marks, Criterion A = 4 marks, Criterion C = 4 marks, Criterion C = 4 marks, Criterion D = 5 marks, Criterion D = 5 marks, Criterion D = 10 marks."
+    };
+    const questionPlan=criterionMode
+      ? "Exactly 4 questions, each worth 5 marks and assigned only to Criterion "+mode.slice(-1)+"."
+      : selectedTasks.map(key=>key.toUpperCase()+": "+questionPlans[key]).join("\n");
     userContent=`Create an ORIGINAL MYP ${level} ${disciplineLabels[discipline]} Individuals and Societies on-screen examination-style practice paper on ${topic}. DISCIPLINE: ${disciplineGuides[discipline]} Use the public MYP I&S subject-guide task descriptions as a style reference, but write entirely new source material, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted examination questions or sources.
 EXAMINATION BLUEPRINT:
 - The full practice paper is 120 minutes and EXACTLY 80 marks, with three tasks:
@@ -604,7 +612,7 @@ REQUESTED MODE: ${mode}
 REQUIRED TASKS AND MARKS:
 ${Object.entries(taskGuidance).map(([key,t])=>key+": "+t.name+"; task marks "+t.marks+"; criterion marks "+JSON.stringify(t.criteria)+"; focus: "+t.focus).join("\n")}
 QUESTION AND SOURCE DESIGN:
-- Full/task papers must have 3–7 structured questions per task. Question marks must add exactly to the task total. Every question must be assigned one criterion (A, B, C or D); the question marks assigned to each criterion must add exactly to that task's specified criterion breakdown.
+- REQUIRED QUESTION PLAN (follow exactly; do not combine, omit or merge questions):\n${questionPlan}\n- Every task must contain 3–7 separate structured questions. Each question must be a distinct numbered sub-question with its own question text, mark value, criterion, successCriteria and markscheme. Do not return a single compound question or a single extended prompt as the whole task.\n- Question marks must add exactly to the task total. Every question must be assigned one criterion (A, B, C or D); the question marks assigned to each criterion must add exactly to that task's specified criterion breakdown.
 - Each task needs substantial original stimulus/source material (at least 120 words): primary/secondary extracts, articles, journals, blogs, historical records, maps described with a key/scale and spatial information, data tables with units, charts/graphs described with axes and values, images described accessibly, or contrasting viewpoints. Use varied source types across the paper and include source origin/context when relevant.
 - Investigating sources should support judging an existing investigation and planning a new one. Communicating sources should give enough information to produce the requested format for a specified audience and purpose. Thinking critically should use multiple sources or contrasting perspectives and culminate in an extended response.
 - Use age-appropriate MYP ${level} language, authentic command terms and progressively demanding questions. Every question has 2–4 successCriteria and at least 2 indicative markscheme points.
