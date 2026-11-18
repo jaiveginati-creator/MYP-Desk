@@ -93,6 +93,9 @@ function renderPaper(paper){
  (task.questions||[]).forEach((q,qi)=>{html+=renderQuestion(q,ti,qi)});
  html+='</section>';
  });
+ if(paper.tasks.length===3&&Number(paper.totalMarks)===80){
+  html+='<section class="eng-submit-all"><div class="eng-submit-copy"><span>FINAL SUBMISSION</span><h3>Ready to submit your full assessment?</h3><p>AI will assess every response, calculate your total out of 80 and provide an indicative MYP 1–7 band.</p></div><button type="button" class="btn" id="eng-submit-all">Submit full assessment ↗</button><div id="eng-overall-result" aria-live="polite"></div></section>';
+ }
  return html;
 }
 async function generate(){
@@ -118,15 +121,78 @@ async function mark(taskIndex,questionIndex,button){
   const res=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment_mark",level:document.getElementById("eng-level").value,taskType:task.type,taskTitle:task.title,question:q.question,marks:q.marks,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],sources:(task.sources||[]).map(s=>s.content).join("\n\n"),response})});
   const data=await res.json();if(!res.ok)throw new Error(data.error||"Feedback request failed.");
   const a=data.assessment;if(!a)throw new Error("The AI returned no assessment.");
-  feedback.innerHTML='<strong>Estimated practice score: '+Number(a.score)+' / '+Number(a.maxScore||q.marks)+'</strong>\n'+escapeHTML(a.feedback)+'\n\nSTRENGTHS\n• '+(a.strengths||[]).map(escapeHTML).join('\n• ')+'\n\nNEXT STEPS\n• '+(a.improvements||[]).map(escapeHTML).join('\n• ');
+  feedback.innerHTML=assessmentFeedbackHTML(a,q.marks);
  }catch(error){feedback.textContent="Could not assess this response: "+error.message}
  finally{button.disabled=false;button.textContent="Get AI feedback"}
+}
+function assessmentFeedbackHTML(a,maxScore){
+ const score=Number(a.score)||0;
+ return '<strong>Estimated practice score: '+score+' / '+Number(a.maxScore||maxScore)+'</strong>\n'+escapeHTML(a.feedback)+'\n\nSTRENGTHS\n• '+(a.strengths||[]).map(escapeHTML).join('\n• ')+'\n\nNEXT STEPS\n• '+(a.improvements||[]).map(escapeHTML).join('\n• ');
+}
+function practiceBand(percent){
+ if(percent<10)return 1;
+ if(percent<25)return 2;
+ if(percent<40)return 3;
+ if(percent<55)return 4;
+ if(percent<70)return 5;
+ if(percent<85)return 6;
+ return 7;
+}
+async function submitFullAssessment(button){
+ if(!lastPaper||!Array.isArray(lastPaper.tasks)||lastPaper.tasks.length!==3)return;
+ const resultRoot=document.getElementById("eng-overall-result");
+ if(!resultRoot)return;
+ button.disabled=true;button.textContent="Grading all responses…";
+ resultRoot.innerHTML='<div class="eng-overall-loading">Assessing each response against its question and available marks. Please keep this page open.</div>';
+ const taskResults=[];
+ let totalScore=0,totalMax=0;
+ try{
+  for(let ti=0;ti<lastPaper.tasks.length;ti++){
+   const task=lastPaper.tasks[ti],questions=Array.isArray(task.questions)?task.questions:[];
+   let taskScore=0,taskMax=0;
+   for(let qi=0;qi<questions.length;qi++){
+    const q=questions[qi],max=Number(q.marks)||0;
+    const input=document.getElementById("eng-answer-"+ti+"-"+qi);
+    const feedback=document.querySelector('[data-eng-question="'+ti+"-"+qi+'"] [data-eng-feedback]');
+    const response=input?input.value.trim():"";
+    taskMax+=max;totalMax+=max;
+    let assessment;
+    if(response.length<15){
+     assessment={score:0,maxScore:max,feedback:response?"This response is too short to assess reliably. Develop your answer with relevant explanation and evidence.":"No response submitted. This question receives 0 in this practice calculation.",strengths:[],improvements:["Complete the response and support your ideas with specific evidence."]};
+    }else{
+     if(feedback){feedback.hidden=false;feedback.textContent="AI is assessing this response…"}
+     const res=await fetch(API(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"english_eassessment_mark",level:document.getElementById("eng-level").value,taskType:task.type,taskTitle:task.title,question:q.question,marks:max,commandTerm:q.commandTerm,successCriteria:q.successCriteria||[],sources:(task.sources||[]).map(s=>s.content).join("\n\n"),response})});
+     const data=await res.json();
+     if(!res.ok)throw new Error(data.error||("Grading failed for Task "+(ti+1)+", Question "+(qi+1)+"." ));
+     if(!data.assessment)throw new Error("The AI returned no assessment for Task "+(ti+1)+", Question "+(qi+1)+".");
+     assessment=data.assessment;
+    }
+    const rawScore=Number(assessment.score);
+    const score=Math.max(0,Math.min(max,Number.isFinite(rawScore)?rawScore:0));
+    assessment.score=score;assessment.maxScore=max;
+    taskScore+=score;totalScore+=score;
+    if(feedback){feedback.hidden=false;feedback.innerHTML=assessmentFeedbackHTML(assessment,max)}
+   }
+   taskResults.push({title:task.title||("Task "+(ti+1)),score:taskScore,max:taskMax});
+  }
+  const percent=totalMax?Math.round(totalScore/totalMax*100):0;
+  const band=practiceBand(percent);
+  resultRoot.innerHTML='<div class="eng-overall-card"><div class="eng-overall-top"><div><span>YOUR FULL ASSESSMENT RESULT</span><p>Estimated total score</p></div><div class="eng-band">BAND '+band+'</div></div><div class="eng-overall-score"><strong>'+Number(totalScore.toFixed(1))+'</strong><span>/ '+totalMax+'</span><em>'+percent+'%</em></div><div class="eng-overall-breakdown">'+taskResults.map((r,i)=>'<div><span>Task '+(i+1)+' · '+escapeHTML(r.title)+'</span><strong>'+Number(r.score.toFixed(1))+' / '+r.max+'</strong></div>').join("")+'</div><p class="eng-band-note">Indicative practice band only. The percentage-to-band conversion is a guide for revision and is not an official IB grade boundary.</p></div>';
+  button.textContent="Assessment graded ✓";
+ }catch(error){
+  resultRoot.innerHTML='<div class="eng-overall-error"><strong>Grading could not be completed.</strong><p>'+escapeHTML(error.message||"Please try submitting again.")+'</p><small>Any individual feedback already completed remains visible. You can retry the full submission.</small></div>';
+  button.textContent="Retry full assessment ↗";
+  button.disabled=false;
+  return;
+ }
+ button.disabled=false;
 }
 function handleClick(event){
  if(event.target.closest("#eng-timer-toggle")){toggleTimer();return}
  if(event.target.closest("#eng-timer-reset")){resetTimer();return}
  const tab=event.target.closest("[data-eng-tab]");if(tab){setTab(tab.dataset.engTab);return}
  if(event.target.closest("#eng-generate")){generate();return}
+ const submitButton=event.target.closest("#eng-submit-all");if(submitButton){submitFullAssessment(submitButton);return}
  const markButton=event.target.closest("[data-eng-mark]");if(markButton){const parts=markButton.dataset.engMark.split("-").map(Number);mark(parts[0],parts[1],markButton)}
 }
 window.EnglishAssessment=Object.freeze({markup,handleClick,renderPaper});
