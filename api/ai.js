@@ -437,15 +437,17 @@ Summary: ${summary}
 Key ideas:
 ${points.map((point,index)=>(index+1)+". "+point).join("\\n")}
 TEACHING QUALITY:
-- Begin with a clear overview that explains what the topic is, why it matters and how its main ideas connect.
-- Write 4–5 ordered concept sections, each about 140–190 words. Each section must teach a distinct idea with precise definitions, step-by-step mechanisms where relevant, cause-and-effect reasoning, a concrete example/application, and links to earlier concepts. Explain specialist vocabulary when it first appears.
-- Include 4–7 key terms with accurate, student-friendly definitions.
-- Include a useful visualModel: describe a labelled diagram, flow chart, particle model, circuit, graph or process that a student could draw. Explain what each part/arrow/axis represents; do not pretend an image is attached.
-- Give a workedExample (100–160 words) that demonstrates how to apply the science, including equations, substitutions and units where appropriate. If no calculation fits, use a worked explanation of a real application.
-- Explain one common misconception and correct it clearly (60–100 words).
-- Add 2–3 original examPractice questions with marks and a short answerOutline for revision. Vary command terms and include at least one application or data-based question where appropriate.
-- Finish with one checkQuestion that tests transfer/application and a concise modelAnswer that explains the reasoning.
-Return JSON with objectives (3–5 measurable outcomes), overview (130–170 words), sections (4–5 ordered sections, each 140–190 words), keyTerms, visualModel, workedExample, commonMisconception, examPractice, checkQuestion and modelAnswer. Use natural paragraphs, not bullet-point fragments, inside each explanation. Keep all content accurate, age-appropriate and coherent with the topic.`;
+- Begin with a clear, substantial overview that explains what the topic is, why it matters, where it appears in real science or everyday life, and how the main ideas connect.
+- Write 5–6 ordered concept sections, each about 230–300 words. These must read like proper textbook teaching, not expanded bullet points. Teach one distinct idea per section with clear definitions, carefully sequenced explanations, step-by-step mechanisms where relevant, cause-and-effect reasoning, a worked-through example or application, and links to concepts already introduced. Explain specialist vocabulary when it first appears. Use enough detail that a student could learn the topic independently without needing a teacher to fill in missing steps.
+- Build explanations progressively: introduce the basic model first, then explain how and why it works, then apply it to unfamiliar or real-world situations. Where relevant, explain variables, conditions, limitations, patterns and exceptions rather than presenting oversimplified rules.
+- Include 5–8 key terms with accurate, student-friendly definitions that add useful detail rather than repeating the section text.
+- Include a useful visualModel: describe a labelled diagram, flow chart, particle model, circuit, graph or process that a student could draw. Explain what each part, arrow and axis represents, and how to interpret the completed model; do not pretend an image is attached.
+- Give a workedExample (180–230 words) that demonstrates how to apply the science in a sequence of clear steps, including equations, substitutions, units and interpretation where appropriate. If no calculation fits, use a detailed worked explanation of a real application and explain why each step follows.
+- Explain one common misconception and correct it clearly (90–130 words), including why the incorrect idea sounds plausible and what the scientific model actually says.
+- Add 3 original examPractice questions with marks and useful answerOutlines for revision. Vary command terms and include at least one application, unfamiliar-context or data-based question where appropriate. Ensure the answer outlines explain the reasoning expected, not just list keywords.
+- Finish with one checkQuestion that tests transfer or application to a new situation and a modelAnswer that explains the reasoning in enough detail for the student to learn from it.
+- Keep the lesson focused: add depth through explanation, examples and scientific reasoning, not repetition, filler, unrelated facts or unnecessarily advanced content.
+Return JSON with objectives (3–5 measurable outcomes), overview (180–220 words), sections (5–6 ordered sections, each 230–300 words), keyTerms, visualModel, workedExample, commonMisconception, examPractice (3 questions), checkQuestion and modelAnswer. Use natural, connected paragraphs inside each explanation, not bullet-point fragments. Keep all content accurate, age-appropriate and coherent with the supplied topic.`;
     responseFormat=strictJsonFormat("science_lesson",SCIENCE_LESSON_SCHEMA);
   }
 
