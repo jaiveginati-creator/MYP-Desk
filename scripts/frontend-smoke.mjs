@@ -60,15 +60,30 @@ try {
       await page.locator(".is-shell").waitFor();
       if (await page.locator(".is-criterion-card").count() !== 4) throw new Error("I&S overview should show four separate criterion sections.");
       if (await page.locator(".is-tab").count() !== 6) throw new Error("I&S should have overview, four criteria and a full-paper section.");
+      if (await page.locator(".is-discipline-tab").count() !== 3) throw new Error("I&S should offer History, Geography and Integrated Humanities pathways.");
       await page.evaluate(() => {
         window.fetch = async (_url, options) => {
           const request = JSON.parse(options.body);
+          if (!["history","geography","integrated"].includes(request.discipline)) throw new Error("I&S generation must include the selected discipline.");
           const criteria = request.mode === "full" ? ["A","B","C","D"] : [request.mode];
           const names = {A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
           const tasks = criteria.map(criterion => ({criterion,criterionName:names[criterion],title:"Practice task "+criterion,marks:25,sourceTitle:"Sample source",sourceText:"This is an original fictional case study with enough contextual information for students to interpret the situation, identify evidence and answer the related questions. It is included only to test the paper renderer.",questions:[{question:"Identify one important feature shown in the source.",marks:5,commandTerm:"Identify",successCriteria:["Select a relevant detail"]},{question:"Explain a factor that contributed to the situation.",marks:10,commandTerm:"Explain",successCriteria:["Use evidence from the source","Explain a relevant cause or consequence"]},{question:"Evaluate the significance of the issue.",marks:10,commandTerm:"Evaluate",successCriteria:["Consider more than one perspective","Reach a justified conclusion"]}]}));
           return {ok:true,json:async()=>({paper:{title:"Mock I&S practice paper",topicLabel:request.topic,level:request.level,mode:request.mode,totalMarks:criteria.length*25,durationMinutes:request.mode==="full"?120:30,tasks}})};
         };
       });
+      for (const [discipline,label] of [["history","History"],["geography","Geography"],["integrated","Integrated Humanities"]]) {
+        await page.locator('[data-is-discipline="' + discipline + '"]').click();
+        if (!(await page.locator(".is-pathway-description").textContent()).length) throw new Error(label+" pathway should explain its subject focus.");
+        await page.locator('[data-is-tab="full"]').click();
+        const options = await page.locator("#is-topic option").allTextContents();
+        if (!options.length) throw new Error(label+" should provide its own topic list.");
+        await page.locator('[data-is-generate="full"]').click();
+        await page.locator(".is-paper-head").waitFor();
+        if (await page.locator(".is-task").count() !== 4) throw new Error(label+" full paper should contain all four criteria.");
+        if (!(await page.locator(".is-paper-head").textContent()).includes(label)) throw new Error(label+" paper should identify its selected discipline.");
+      }
+      await page.locator('[data-is-discipline="integrated"]').click();
+      await page.locator('[data-is-tab="overview"]').click();
       for (const criterion of ["A","B","C","D"]) {
         await page.locator('.is-tab[data-is-tab="' + criterion + '"]').click();
         if (!(await page.locator('[data-is-generate="' + criterion + '"]').isVisible())) throw new Error("Criterion "+criterion+" should provide its own AI paper generator.");
