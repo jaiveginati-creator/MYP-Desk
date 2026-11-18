@@ -175,25 +175,54 @@ function validateMathMark(data,answers){
 }
 
 
-const IS_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},topicLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},sourceTitle:{type:"string"},sourceText:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","sourceTitle","sourceText","questions"],additionalProperties:false}}},required:["title","topicLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
+const IS_TASKS={
+ investigating:{name:"Investigating",marks:26,criteria:{A:6,B:20},focus:"Evaluate an investigation and plan an investigation of your own. Formulate and justify a focused research question; identify relevant media, stakeholders, methods and sources; create a feasible action plan; evaluate process/results. Include a small amount of subject knowledge (criterion A)."},
+ communicating:{name:"Communicating",marks:18,criteria:{A:6,C:12},focus:"Communicate creatively and effectively for a clearly specified audience and purpose, in a required format. The response may be an article, letter, speech, blog, poster/infographic, presentation or another suitable format. Assess accurate subject knowledge as well as communication choices."},
+ thinking:{name:"Thinking critically",marks:36,criteria:{A:8,C:8,D:20},focus:"Use structured source-based questions about issues, arguments and perspectives, culminating in an extended piece of writing. Assess subject knowledge, clear communication, synthesis, source origin/purpose/value/limitations, contrasting perspectives and a justified argument."}
+};
+const IS_CRITERIA={A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
+const IS_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},topicLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{taskId:{type:"string"},taskName:{type:"string"},marks:{type:"integer"},criterionMarks:{type:"object",properties:{A:{type:"integer"},B:{type:"integer"},C:{type:"integer"},D:{type:"integer"}},required:["A","B","C","D"],additionalProperties:false},title:{type:"string"},sourceTitle:{type:"string"},sourceText:{type:"string"},questions:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}},markscheme:{type:"array",items:{type:"string"}}},required:["criterion","question","marks","commandTerm","successCriteria","markscheme"],additionalProperties:false}}},required:["taskId","taskName","marks","criterionMarks","title","sourceTitle","sourceText","questions"],additionalProperties:false}}},required:["title","topicLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
 function validateISPaper(data,mode,topic,level){
- const expected=mode==="full"?["A","B","C","D"]:[mode];
- const names={A:"Knowing and understanding",B:"Investigating",C:"Communicating",D:"Thinking critically"};
- if(!data||!Array.isArray(data.tasks)||data.tasks.length!==expected.length)throw new Error("The generated I&S paper has an incorrect criterion structure.");
- const tasks=data.tasks.map(t=>{
-  const criterion=String(t.criterion||"");
-  if(!expected.includes(criterion)||!Array.isArray(t.questions)||t.questions.length<3||t.questions.length>5)throw new Error("A generated I&S criterion task is incomplete.");
-  const questions=t.questions.map(q=>({question:String(q.question||"").trim().slice(0,2400),marks:Math.max(1,Math.min(15,Number(q.marks)||1)),commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[]}));
-  if(questions.some(q=>!q.question))throw new Error("An I&S question is empty.");
-  if(questions.reduce((sum,q)=>sum+q.marks,0)!==25||Number(t.marks)!==25)throw new Error("Each I&S criterion task must total exactly 25 marks.");
-  const sourceText=String(t.sourceText||"").trim();
-  if(sourceText.length<120)throw new Error("A source or stimulus is too short to support the questions.");
-  return {criterion,criterionName:names[criterion],title:String(t.title||"Criterion task").slice(0,180),marks:25,sourceTitle:String(t.sourceTitle||"Source").slice(0,180),sourceText:sourceText.slice(0,5000),questions};
+ const isFull=mode==="full";
+ const isTask=Object.hasOwn(IS_TASKS,mode);
+ const isCriterion=mode.startsWith("criterion-")&&["A","B","C","D"].includes(mode.slice(-1));
+ const expectedTasks=isFull?Object.keys(IS_TASKS):isTask?[mode]:[];
+ const expectedCriterion=isCriterion?mode.slice(-1):null;
+ if(!isFull&&!isTask&&!isCriterion)throw new Error("Unknown I&S practice mode.");
+ if(!data||!Array.isArray(data.tasks)||data.tasks.length!==(isFull?3:1))throw new Error("The generated I&S paper has an incorrect task structure.");
+ const normalized=data.tasks.map(t=>{
+  const taskId=String(t.taskId||"");
+  if(isCriterion){
+   if(taskId!=="criterion-"+expectedCriterion)throw new Error("The criterion drill is incomplete.");
+  }else if(!expectedTasks.includes(taskId))throw new Error("A required I&S examination task is missing or incorrectly labelled.");
+  const expectedTask=isTask?IS_TASKS[mode]:isFull?IS_TASKS[taskId]:null;
+  const expectedMarks=isCriterion?20:expectedTask.marks;
+  const expectedBreakdown=isCriterion?{A:0,B:0,C:0,D:0,...{[expectedCriterion]:20}}:{A:0,B:0,C:0,D:0,...expectedTask.criteria};
+  if(!Array.isArray(t.questions)||t.questions.length<3||t.questions.length>7)throw new Error("An I&S task needs 3–7 structured questions.");
+  const questions=t.questions.map(q=>{
+   const criterion=String(q.criterion||"");
+   const marks=Number(q.marks);
+   if(!IS_CRITERIA[criterion]||!Number.isInteger(marks)||marks<1||marks>20)throw new Error("An I&S question has an invalid criterion or mark value.");
+   const markscheme=Array.isArray(q.markscheme)?q.markscheme.map(v=>String(v).trim()).filter(Boolean).slice(0,6):[];
+   if(markscheme.length<2)throw new Error("Each I&S question needs an indicative markscheme.");
+   return {criterion,question:String(q.question||"").trim().slice(0,2400),marks,commandTerm:String(q.commandTerm||"Explain").slice(0,60),successCriteria:Array.isArray(q.successCriteria)?q.successCriteria.map(String).slice(0,5):[],markscheme};
+  });
+  if(questions.some(q=>!q.question||q.successCriteria.length<2))throw new Error("An I&S question or its success criteria are incomplete.");
+  const byCriterion={A:0,B:0,C:0,D:0};for(const q of questions)byCriterion[q.criterion]+=q.marks;
+  if(questions.reduce((sum,q)=>sum+q.marks,0)!==expectedMarks||Number(t.marks)!==expectedMarks)throw new Error("The I&S task has an incorrect mark total.");
+  if(["A","B","C","D"].some(c=>byCriterion[c]!==expectedBreakdown[c]))throw new Error("The I&S task does not match its criterion mark distribution.");
+  const sourceText=String(t.sourceText||"").trim();if(sourceText.length<120)throw new Error("A source or stimulus is too short to support the questions.");
+  return {taskId,taskName:isCriterion?"Criterion "+expectedCriterion+" practice":expectedTask.name,marks:expectedMarks,criterionMarks:expectedBreakdown,title:String(t.title||"Task").slice(0,180),sourceTitle:String(t.sourceTitle||"Source").slice(0,180),sourceText:sourceText.slice(0,6500),questions};
  });
- if(expected.some(c=>!tasks.some(t=>t.criterion===c))||new Set(tasks.map(t=>t.criterion)).size!==expected.length)throw new Error("A required I&S criterion is missing or duplicated.");
- const total=tasks.reduce((sum,t)=>sum+t.marks,0);
- if(total!==expected.length*25||Number(data.totalMarks)!==total)throw new Error("The generated I&S paper has an incorrect total mark value.");
- return {title:String(data.title||"Individuals & Societies practice paper").slice(0,180),topicLabel:topic,level,mode,totalMarks:total,durationMinutes:mode==="full"?120:30,tasks};
+ if(isFull&&expectedTasks.some(id=>!normalized.some(t=>t.taskId===id)))throw new Error("The full I&S examination must include Investigating, Communicating and Thinking critically.");
+ const total=normalized.reduce((sum,t)=>sum+t.marks,0);
+ const expectedTotal=isFull?80:isTask?IS_TASKS[mode].marks:20;
+ if(total!==expectedTotal||Number(data.totalMarks)!==expectedTotal)throw new Error("The generated I&S paper has an incorrect total mark value.");
+ if(isFull){
+  const all={A:0,B:0,C:0,D:0};normalized.forEach(t=>Object.entries(t.criterionMarks).forEach(([c,m])=>all[c]+=m));
+  if(Object.values(all).some(v=>v!==20))throw new Error("The full I&S paper must allocate 20 marks to each criterion.");
+ }
+ return {title:String(data.title||"Individuals & Societies practice paper").slice(0,180),topicLabel:topic,level,mode,totalMarks:total,durationMinutes:isFull?120:isTask?({investigating:40,communicating:25,thinking:55}[mode]):30,tasks:normalized};
 }
 
 const SCIENCE_PAPER_SCHEMA={type:"object",properties:{title:{type:"string"},subject:{type:"string"},subjectLabel:{type:"string"},level:{type:"string"},mode:{type:"string"},totalMarks:{type:"integer"},tasks:{type:"array",items:{type:"object",properties:{criterion:{type:"string"},criterionName:{type:"string"},title:{type:"string"},marks:{type:"integer"},scenario:{type:"string"},data:{type:"string"},questions:{type:"array",items:{type:"object",properties:{question:{type:"string"},marks:{type:"integer"},commandTerm:{type:"string"},successCriteria:{type:"array",items:{type:"string"}}},required:["question","marks","commandTerm","successCriteria"],additionalProperties:false}}},required:["criterion","criterionName","title","marks","scenario","data","questions"],additionalProperties:false}}},required:["title","subject","subjectLabel","level","mode","totalMarks","tasks"],additionalProperties:false};
@@ -528,33 +557,40 @@ Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improv
 
 
   if(action==="is_eassessment"){
-    const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+    const mode=["full","investigating","communicating","thinking","criterion-A","criterion-B","criterion-C","criterion-D"].includes(body.mode)?body.mode:"full";
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     const topic=cleanText(body.topic,160)||"Mixed I&S topics";
     const discipline=["history","geography","integrated"].includes(body.discipline)?body.discipline:"integrated";
     const disciplineLabels={history:"History",geography:"Geography",integrated:"Integrated Humanities"};
-    const disciplineGuides={history:"Keep the paper firmly historical: chronology, change and continuity, causes and consequences, significance, historical perspectives, primary and secondary sources, interpretations and evidence. Use historical settings and avoid turning tasks into generic geography or economics questions.",geography:"Keep the paper firmly geographical: place and space, spatial patterns, human and physical processes, population, migration, urbanisation, environments, resources, development and sustainability. Include map, graph, spatial or statistical stimulus where useful, described clearly in text.",integrated:"Use genuinely interdisciplinary humanities contexts that connect history, geography, economics and politics. Require students to connect perspectives and explain how social, political, economic, environmental and historical factors interact."};
-    const criteria={A:"Knowing and understanding: demonstrate accurate subject knowledge, use relevant concepts and terminology, and explain processes with specific examples.",B:"Investigating: formulate a focused research question, plan an investigation, select relevant sources, explain how evidence will be collected and consider source usefulness and limitations.",C:"Communicating: organise information for a stated purpose and audience, communicate clearly, use suitable subject terminology and conventions, and construct or interpret maps, graphs, tables or other representations when relevant.",D:"Thinking critically: interpret and analyse sources, identify perspectives and assumptions, compare evidence, evaluate claims and reach a balanced, evidence-supported conclusion."};
-    const chosen=mode==="full"?["A","B","C","D"]:[mode];
-    userContent=`Create an ORIGINAL MYP ${level} ${disciplineLabels[discipline]} Individuals and Societies eAssessment-style practice paper on ${topic}. DISCIPLINE REQUIREMENTS: ${disciplineGuides[discipline]} Use the structure, source-based approach, command terms and skill demands associated with released MYP I&S specimen/past-paper assessments as a reference for exam style, but write entirely new sources, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted past-paper questions or source material.
-STRUCTURE:
-- Full mode: four criterion tasks A, B, C and D, each exactly 25 marks, total 100 marks, recommended duration 120 minutes.
-- Single-criterion mode: one task for the selected criterion, exactly 25 marks, recommended duration 30 minutes.
-- Each task must include one substantial, original source or stimulus (for example a short historical account, a pair of contrasting viewpoints, a data table described in text, a map described in words, a case study, a policy extract or a short news-style report). The source must be long and detailed enough to support the questions.
-- Each task contains 3–5 structured questions adding to exactly 25 marks. Vary command terms and mark values. Questions should progress from accessible comprehension/application to more demanding analysis or evaluation.
-CRITERION FOCUS:
-${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
-QUALITY:
-- Use realistic MYP 4–5 contexts and accessible language, but demand precise evidence-based reasoning.
-- Keep every task aligned to the selected ${disciplineLabels[discipline]} pathway. Only Integrated Humanities should deliberately combine multiple humanities disciplines.
-- Criterion A should assess knowledge and understanding, not just recall.
-- Criterion B must ask students to formulate or refine a research question and make reasoned investigation choices; do not turn it into a generic essay.
-- Criterion C must assess clear communication for a purpose/audience and may include a map, graph, table, structured report or other suitable format described in the source.
-- Criterion D must require close source analysis, perspectives, evidence evaluation and a justified conclusion.
-- Provide enough source information for every question to be answerable. Make any invented data clearly part of a fictional case study; do not present fabricated statistics as real.
-- Use accurate MYP command terms. Do not include answer keys, model answers or marks awarded in the student paper.
-- Every question must include 2–4 concise successCriteria describing what a strong answer should demonstrate.
-Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each task: criterion, criterionName, title, marks, sourceTitle, sourceText, questions. Each question: question, marks, commandTerm, successCriteria. Total marks must be ${chosen.length*25}.`;
+    const disciplineGuides={history:"Keep all content historical: chronology, change and continuity, causes and consequences, significance, historical perspectives, primary and secondary sources, interpretations and evidence. Use authentic historical contexts and avoid generic geography/economics questions.",geography:"Keep all content geographical: place and space, spatial patterns, human and physical processes, population, migration, urbanisation, environments, resources, development and sustainability. Include clear map, graph or spatial-data stimuli where useful.",integrated:"Use genuinely interdisciplinary humanities contexts connecting history, geography, economics and politics. Require students to connect social, political, economic, environmental and historical factors."};
+    const criteria=IS_CRITERIA;
+    const selectedTasks=mode==="full"?Object.keys(IS_TASKS):Object.hasOwn(IS_TASKS,mode)?[mode]:[];
+    const criterionMode=mode.startsWith("criterion-");
+    const taskGuidance=criterionMode?{[mode]:{name:"Criterion "+mode.slice(-1)+" practice",marks:20,criteria:{A:0,B:0,C:0,D:0,...{[mode.slice(-1)]:20}},focus:"Create a focused criterion skills drill with source material and 3–5 structured questions totalling 20 marks."}}:Object.fromEntries(selectedTasks.map(key=>[key,IS_TASKS[key]]));
+    const chosenMarks=Object.values(taskGuidance).reduce((sum,t)=>sum+t.marks,0);
+    userContent=`Create an ORIGINAL MYP ${level} ${disciplineLabels[discipline]} Individuals and Societies on-screen examination-style practice paper on ${topic}. DISCIPLINE: ${disciplineGuides[discipline]} Use the public MYP I&S subject-guide task descriptions as a style reference, but write entirely new source material, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted examination questions or sources.
+EXAMINATION BLUEPRINT:
+- The full practice paper is 120 minutes and EXACTLY 80 marks, with three tasks:
+  1. INVESTIGATING = 26 marks: Criterion A = 6, Criterion B = 20.
+  2. COMMUNICATING = 18 marks: Criterion A = 6, Criterion C = 12.
+  3. THINKING CRITICALLY = 36 marks: Criterion A = 8, Criterion C = 8, Criterion D = 20.
+- Across the complete paper, each criterion A, B, C and D therefore contributes exactly 20 marks.
+- Task Investigating: evaluate an investigation and plan an investigation; formulate and justify a focused research question; identify methods, sources, media/stakeholders; create a feasible action plan; evaluate process/results. Include subject knowledge.
+- Task Communicating: give a clear audience, purpose and specified format. Require a purposeful communication product such as an article, letter, speech, blog, poster/infographic or presentation. Assess both knowledge and communication.
+- Task Thinking critically: structured source-based questions about issues, arguments and perspectives, culminating in a substantial extended written response. Assess knowledge, communication, source analysis/evaluation and a justified argument.
+- If requested mode is one task, generate ONLY that task with its exact task marks and criterion breakdown. If mode is criterion-A/B/C/D, generate a 20-mark source-based criterion drill, clearly labelled as a practice drill rather than an official exam task.
+REQUESTED MODE: ${mode}
+REQUIRED TASKS AND MARKS:
+${Object.entries(taskGuidance).map(([key,t])=>key+": "+t.name+"; task marks "+t.marks+"; criterion marks "+JSON.stringify(t.criteria)+"; focus: "+t.focus).join("\n")}
+QUESTION AND SOURCE DESIGN:
+- Full/task papers must have 3–7 structured questions per task. Question marks must add exactly to the task total. Every question must be assigned one criterion (A, B, C or D); the question marks assigned to each criterion must add exactly to that task's specified criterion breakdown.
+- Each task needs substantial original stimulus/source material (at least 120 words): primary/secondary extracts, articles, journals, blogs, historical records, maps described with a key/scale and spatial information, data tables with units, charts/graphs described with axes and values, images described accessibly, or contrasting viewpoints. Use varied source types across the paper and include source origin/context when relevant.
+- Investigating sources should support judging an existing investigation and planning a new one. Communicating sources should give enough information to produce the requested format for a specified audience and purpose. Thinking critically should use multiple sources or contrasting perspectives and culminate in an extended response.
+- Use age-appropriate MYP ${level} language, authentic command terms and progressively demanding questions. Every question has 2–4 successCriteria and at least 2 indicative markscheme points.
+- Clearly label invented case studies and invented datasets as fictional. Do not fabricate citations or present invented statistics as real.
+- Keep the selected discipline consistent. Only Integrated Humanities deliberately combines multiple disciplines.
+- Do not include markscheme or model answers in the visible student question text; return indicative markscheme separately in the JSON fields.
+Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each task has taskId, taskName, marks, criterionMarks {A,B,C,D}, title, sourceTitle, sourceText, questions. Each question has criterion, question, marks, commandTerm, successCriteria, markscheme. Exact expected total is ${chosenMarks}. For full mode include exactly investigating, communicating and thinking in that order.`;
     responseFormat=strictJsonFormat("individuals_societies_practice_paper",IS_PAPER_SCHEMA);
   }
 
@@ -717,7 +753,7 @@ Assess only what the response demonstrates. Use age-appropriate, constructive En
       return send(res,200,{...validateMathMark(parseJson(content),answers),provider:"groq",model:process.env.GROQ_MODEL||DEFAULT_MODEL});
     }
     if(action==="is_eassessment"){
-      const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
+      const mode=["full","investigating","communicating","thinking","criterion-A","criterion-B","criterion-C","criterion-D"].includes(body.mode)?body.mode:"full";
       const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
       const topic=cleanText(body.topic,160)||"Mixed I&S topics";
       const paper=validateISPaper(parseJson(content),mode,topic,level);
