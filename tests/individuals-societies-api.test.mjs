@@ -4,6 +4,7 @@ import handler from "../api/ai.js";
 const originalFetch=globalThis.fetch;
 const originalKey=process.env.GROQ_API_KEY;
 const originalModel=process.env.GROQ_MODEL;
+let activeMode="full";
 process.env.GROQ_API_KEY="test-key";
 process.env.GROQ_MODEL="test-model";
 function response(){const state={status:200,payload:null};return {state,status(code){state.status=code;return this;},setHeader(){},json(payload){state.payload=payload;return this;}};}
@@ -60,7 +61,7 @@ try{
  }
  // Verify harmless AI label variations are canonicalized rather than rejected.
  globalThis.fetch=async(_url,options)=>{
-  const request=JSON.parse(options.body),generated=paper(request.mode);
+  const request=JSON.parse(options.body),generated=paper(activeMode);
   if(request.mode==="full"){
    generated.tasks[0].taskId="Task A";
    generated.tasks[1].taskId="Task B";
@@ -72,6 +73,7 @@ try{
   return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(generated)}}]})};
  };
  for(const mode of ["full","criterion-A"]){
+  activeMode=mode;
   const result=response();
   await handler({method:"POST",body:{action:"is_eassessment",mode,topic:"Changing communities",level:"MYP 4–5",discipline:"integrated"}},result);
   assert.equal(result.state.status,200,"equivalent labels should be accepted: "+JSON.stringify(result.state.payload));
