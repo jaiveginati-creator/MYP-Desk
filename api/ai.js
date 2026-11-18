@@ -447,7 +447,7 @@ Use the task fulfilment, clarity, organization, vocabulary range, grammatical co
     const chapter=cleanText(body.chapter,160),title=cleanText(body.title,180);
     const chapterTopics=Array.isArray(body.chapterTopics)?body.chapterTopics.map(x=>cleanText(x,120)).slice(0,12):[];
     if(!chapter||!title)return send(res,400,{error:"A chapter and lesson title are required."});
-    userContent=`Create a complete, original MYP \${level} mathematics lesson for Haese Mathematics 9 (MYP 4), 3rd Edition. Chapter: \${chapter}. Lesson: \${title}. Related chapter sections: \${chapterTopics.join("; ")}.
+    userContent=`Create a complete, original MYP ${level} mathematics lesson for Haese Mathematics 9 (MYP 4), 3rd Edition. Chapter: ${chapter}. Lesson: ${title}. Related chapter sections: ${chapterTopics.join("; ")}.
 Write for a student learning this idea independently for the first time. Use simple, direct language but teach the mathematics thoroughly. Do not copy textbook wording or claim to reproduce its worked examples or exercises.
 TEACHING REQUIREMENTS:
 - Start with an overview explaining what the idea means, why it is useful and how it connects to the wider chapter.
@@ -471,14 +471,14 @@ Return JSON with objectives, overview, sections (heading and explanation), worke
     const topic=cleanText(body.topic,160)||"mixed topics";
     const criteria={A:"Knowing and understanding: select and apply appropriate mathematical knowledge and techniques to solve problems accurately.",B:"Investigating patterns: explore examples, identify a pattern, formulate a conjecture, test it and explain whether the evidence supports it.",C:"Communicating: present a clear mathematical argument using correct notation, diagrams, tables, graphs and logically ordered working.",D:"Applying mathematics in real-life contexts: formulate a real situation mathematically, choose a suitable method, solve, interpret the result in context and comment on reasonableness or limitations."};
     const chosen=mode==="full"?["A","B","C","D"]:[mode];
-    userContent=`Create an ORIGINAL MYP \${level} Mathematics practice assessment for the Haese Mathematics 9 MYP 4 course. Topic focus: \${topic}. This is an original revision exercise inspired by the broad MYP Mathematics criteria, NOT an official IB paper and NOT a copy of any past paper.
+    userContent=`Create an ORIGINAL MYP ${level} Mathematics practice assessment for the Haese Mathematics 9 MYP 4 course. Topic focus: ${topic}. This is an original revision exercise inspired by the broad MYP Mathematics criteria, NOT an official IB paper and NOT a copy of any past paper.
 STRUCTURE:
 - Full mode: exactly four criterion tasks A, B, C and D, each worth exactly 20 marks (80 total).
 - Single-criterion mode: exactly one task for the selected criterion, worth 20 marks.
 - Each task must contain 3–5 numbered questions adding to exactly 20 marks. Use a sensible mix of marks and difficulty.
 - Each task begins with a self-contained mathematical context. Supply all information, measurements, tables or values needed. Never refer to an unseen diagram or image.
 CRITERION FOCUS:
-\${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
+${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
 QUALITY:
 - Use authentic MYP command terms: calculate, determine, construct, describe, explain, justify, interpret, compare, evaluate, formulate.
 - Criterion A should test accurate methods and application, not only definitions.
@@ -496,11 +496,11 @@ Return ONLY JSON with title, topicLabel, level, mode, totalMarks and tasks. Each
     const answers=Array.isArray(body.answers)?body.answers.slice(0,24):[];
     if(!answers.length)return send(res,400,{error:"No mathematics answers were supplied."});
     if(answers.some(a=>!cleanText(a.question,2200)||!cleanText(a.response,8000)))return send(res,400,{error:"Answer every question before requesting marking."});
-    userContent=`Give formative AI marking for these MYP \${level} Mathematics practice answers. This is a learning estimate, not an official IB grade. Return one assessment for each answer, in the exact same order.
+    userContent=`Give formative AI marking for these MYP ${level} Mathematics practice answers. This is a learning estimate, not an official IB grade. Return one assessment for each answer, in the exact same order.
 Assess only the mathematics demonstrated. Check numerical accuracy, algebraic steps, method selection, notation, units, reasoning and interpretation as relevant to the criterion and command term. Award partial credit when valid working is shown even if the final answer is wrong. Do not award marks for unsupported final answers where working is required. Do not penalise a correct alternative method. If the student response is blank or too incomplete, award zero and explain what is missing. Keep feedback specific and encouraging.
 ANSWERS:
-\${answers.map((a,i)=>"ITEM "+(i+1)+"\\nCriterion: "+cleanText(a.criterion,1)+" — "+cleanText(a.criterionName,100)+"\\nTask: "+cleanText(a.taskTitle,160)+"\\nContext: "+cleanText(a.context,1800)+"\\nQuestion: "+cleanText(a.question,2200)+"\\nCommand term: "+cleanText(a.commandTerm,60)+"\\nAvailable marks: "+Math.max(1,Math.min(10,Number(a.marks)||1))+"\\nSuccess criteria: "+JSON.stringify(Array.isArray(a.successCriteria)?a.successCriteria.slice(0,5):[])+"\\nStudent response: "+cleanText(a.response,8000)).join("\\n\\n---\\n\\n")}
-Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improvements":["..."],"feedback":"..."}]}. Return exactly \${answers.length} assessment objects in the same order. Each score must be between 0 and that item's available marks.`;
+${answers.map((a,i)=>"ITEM "+(i+1)+"\\nCriterion: "+cleanText(a.criterion,1)+" — "+cleanText(a.criterionName,100)+"\\nTask: "+cleanText(a.taskTitle,160)+"\\nContext: "+cleanText(a.context,1800)+"\\nQuestion: "+cleanText(a.question,2200)+"\\nCommand term: "+cleanText(a.commandTerm,60)+"\\nAvailable marks: "+Math.max(1,Math.min(10,Number(a.marks)||1))+"\\nSuccess criteria: "+JSON.stringify(Array.isArray(a.successCriteria)?a.successCriteria.slice(0,5):[])+"\\nStudent response: "+cleanText(a.response,8000)).join("\\n\\n---\\n\\n")}
+Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improvements":["..."],"feedback":"..."}]}. Return exactly ${answers.length} assessment objects in the same order. Each score must be between 0 and that item's available marks.`;
     responseFormat=strictJsonFormat("math_practice_feedback",MATH_MARK_SCHEMA);
   }
 
