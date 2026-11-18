@@ -531,9 +531,12 @@ Return JSON: {"assessments":[{"score":0,"maxScore":0,"strengths":["..."],"improv
     const mode=["full","A","B","C","D"].includes(body.mode)?body.mode:"full";
     const level=["MYP 4","MYP 4–5","MYP 5"].includes(body.level)?body.level:"MYP 4–5";
     const topic=cleanText(body.topic,160)||"Mixed I&S topics";
+    const discipline=["history","geography","integrated"].includes(body.discipline)?body.discipline:"integrated";
+    const disciplineLabels={history:"History",geography:"Geography",integrated:"Integrated Humanities"};
+    const disciplineGuides={history:"Keep the paper firmly historical: chronology, change and continuity, causes and consequences, significance, historical perspectives, primary and secondary sources, interpretations and evidence. Use historical settings and avoid turning tasks into generic geography or economics questions.",geography:"Keep the paper firmly geographical: place and space, spatial patterns, human and physical processes, population, migration, urbanisation, environments, resources, development and sustainability. Include map, graph, spatial or statistical stimulus where useful, described clearly in text.",integrated:"Use genuinely interdisciplinary humanities contexts that connect history, geography, economics and politics. Require students to connect perspectives and explain how social, political, economic, environmental and historical factors interact."};
     const criteria={A:"Knowing and understanding: demonstrate accurate subject knowledge, use relevant concepts and terminology, and explain processes with specific examples.",B:"Investigating: formulate a focused research question, plan an investigation, select relevant sources, explain how evidence will be collected and consider source usefulness and limitations.",C:"Communicating: organise information for a stated purpose and audience, communicate clearly, use suitable subject terminology and conventions, and construct or interpret maps, graphs, tables or other representations when relevant.",D:"Thinking critically: interpret and analyse sources, identify perspectives and assumptions, compare evidence, evaluate claims and reach a balanced, evidence-supported conclusion."};
     const chosen=mode==="full"?["A","B","C","D"]:[mode];
-    userContent=`Create an ORIGINAL MYP ${level} Individuals and Societies eAssessment-style practice paper on ${topic}. Use the structure, source-based approach, command terms and skill demands associated with released MYP I&S specimen/past-paper assessments as a reference for exam style, but write entirely new sources, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted past-paper questions or source material.
+    userContent=`Create an ORIGINAL MYP ${level} ${disciplineLabels[discipline]} Individuals and Societies eAssessment-style practice paper on ${topic}. DISCIPLINE REQUIREMENTS: ${disciplineGuides[discipline]} Use the structure, source-based approach, command terms and skill demands associated with released MYP I&S specimen/past-paper assessments as a reference for exam style, but write entirely new sources, data, scenarios and questions. Never reproduce, quote or closely paraphrase copyrighted past-paper questions or source material.
 STRUCTURE:
 - Full mode: four criterion tasks A, B, C and D, each exactly 25 marks, total 100 marks, recommended duration 120 minutes.
 - Single-criterion mode: one task for the selected criterion, exactly 25 marks, recommended duration 30 minutes.
@@ -543,7 +546,7 @@ CRITERION FOCUS:
 ${chosen.map(c=>c+": "+criteria[c]).join("\\n")}
 QUALITY:
 - Use realistic MYP 4–5 contexts and accessible language, but demand precise evidence-based reasoning.
-- Across a full paper, balance history, geography, economics, politics, development, resources, sustainability and global interactions where appropriate to the chosen topic.
+- Keep every task aligned to the selected ${disciplineLabels[discipline]} pathway. Only Integrated Humanities should deliberately combine multiple humanities disciplines.
 - Criterion A should assess knowledge and understanding, not just recall.
 - Criterion B must ask students to formulate or refine a research question and make reasoned investigation choices; do not turn it into a generic essay.
 - Criterion C must assess clear communication for a purpose/audience and may include a map, graph, table, structured report or other suitable format described in the source.
