@@ -197,7 +197,7 @@ function validateISPaper(data,mode,topic,level){
   }else if(!expectedTasks.includes(taskId))throw new Error("A required I&S examination task is missing or incorrectly labelled.");
   const expectedTask=isTask?IS_TASKS[mode]:isFull?IS_TASKS[taskId]:null;
   const expectedMarks=isCriterion?20:expectedTask.marks;
-  const expectedBreakdown=isCriterion?{A:0,B:0,C:0,D:0,...{[expectedCriterion]:20}}:expectedTask.criteria;
+  const expectedBreakdown=isCriterion?{A:0,B:0,C:0,D:0,...{[expectedCriterion]:20}}:{A:0,B:0,C:0,D:0,...expectedTask.criteria};
   if(!Array.isArray(t.questions)||t.questions.length<3||t.questions.length>7)throw new Error("An I&S task needs 3–7 structured questions.");
   const questions=t.questions.map(q=>{
    const criterion=String(q.criterion||"");
