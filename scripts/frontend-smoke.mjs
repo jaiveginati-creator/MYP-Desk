@@ -70,7 +70,7 @@ try {
         };
       });
       for (const criterion of ["A","B","C","D"]) {
-        await page.locator('[data-is-tab="' + criterion + '"]').click();
+        await page.locator('.is-tab[data-is-tab="' + criterion + '"]').click();
         if (!(await page.locator('[data-is-generate="' + criterion + '"]').isVisible())) throw new Error("Criterion "+criterion+" should provide its own AI paper generator.");
         await page.locator('[data-is-generate="' + criterion + '"]').click();
         await page.locator(".is-paper-head").waitFor();
