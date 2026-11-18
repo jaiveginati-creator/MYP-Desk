@@ -821,7 +821,8 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 @media(max-width:650px){.ea-controls,.ea-feedback-columns{grid-template-columns:1fr}.ea-task{padding:15px}.ea-options{grid-template-columns:1fr}.ea-paper-head{padding:17px}.ea-paper-head h3{font-size:20px}}
 
 </style>
-<link rel="stylesheet" href="english-assessment.css">\n<link rel="stylesheet" href="science.css">
+<link rel="stylesheet" href="english-assessment.css">
+<link rel="stylesheet" href="science.css">
 </head>
 <body>
 <div class="app">
@@ -838,7 +839,15 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 <div class="nav-label nav-group-label french-workspace-nav" hidden>FRENCH COURSES</div>
 <button class="nav-link nav-child french-workspace-nav" data-page="french-emergent" hidden><span class="nav-icon">A1</span>Emergent · Phases 1–2</button>
 <button class="nav-link nav-child french-workspace-nav" data-page="french-capable" hidden><span class="nav-icon">A2+</span>Capable–Proficient · Phases 3–6</button>
-<div class="nav-label nav-group-label science-workspace-nav" hidden>SCIENCE</div>\n<button class="nav-link science-workspace-nav" data-page="sciences" hidden><span class="nav-icon">⚛</span>Sciences</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="biology" hidden><span class="nav-icon">⌁</span>Biology</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="chemistry" hidden><span class="nav-icon">◈</span>Chemistry</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="physics" hidden><span class="nav-icon">∿</span>Physics</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="science-eassessment" hidden><span class="nav-icon">⌘</span>E-assessment prep</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="science-ad" hidden><span class="nav-icon">A/D</span>Criteria A & D</button>\n<button class="nav-link nav-child science-workspace-nav" data-page="science-bc" hidden><span class="nav-icon">B/C</span>Criteria B & C</button>\n<div class="nav-label nav-group-label">PERSONAL</div>
+<div class="nav-label nav-group-label science-workspace-nav" hidden>SCIENCE</div>
+<button class="nav-link science-workspace-nav" data-page="sciences" hidden><span class="nav-icon">⚛</span>Sciences</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="biology" hidden><span class="nav-icon">⌁</span>Biology</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="chemistry" hidden><span class="nav-icon">◈</span>Chemistry</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="physics" hidden><span class="nav-icon">∿</span>Physics</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="science-eassessment" hidden><span class="nav-icon">⌘</span>E-assessment prep</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="science-ad" hidden><span class="nav-icon">A/D</span>Criteria A & D</button>
+<button class="nav-link nav-child science-workspace-nav" data-page="science-bc" hidden><span class="nav-icon">B/C</span>Criteria B & C</button>
+<div class="nav-label nav-group-label">PERSONAL</div>
 <button class="nav-link" data-page="notes"><span class="nav-icon">▧</span>Notes & Quiz</button>
 </nav>
 <div class="sidebar-bottom"><div class="sidebar-note">One organised space for all your MYP subjects.</div>
@@ -860,7 +869,8 @@ h1,.panel-title,.quiz-question,.empty-panel h2,.overview-title,.science-card-tit
 <div class="toast" id="toast" role="status"></div>
 <script src="ai.js"></script>
 <script src="api-config.js"></script>
-<script src="groq-client.js"></script>\n<script src="science.js"></script>
+<script src="groq-client.js"></script>
+<script src="science.js"></script>
 <script src="french-expansion.js"></script>
 <script src="english-assessment.js"></script>
 <script>
@@ -1123,7 +1133,8 @@ function wireNotes(){
 function openPanel(title){document.getElementById("panelTitle").textContent=title;panel.classList.add("show");panel.setAttribute("aria-hidden","false");overlay.classList.add("show");document.getElementById("profileButton").setAttribute("aria-expanded","true")}
 function closePanel(){panel.classList.remove("show");panel.setAttribute("aria-hidden","true");overlay.classList.remove("show");document.getElementById("profileButton").setAttribute("aria-expanded","false")}
 content.addEventListener("click",handleFrenchStudyClick);
-content.addEventListener("click",e=>{if(window.EnglishAssessment)window.EnglishAssessment.handleClick(e)});\ncontent.addEventListener("click",e=>{if(window.MYPScience)window.MYPScience.handleClick(e)});
+content.addEventListener("click",e=>{if(window.EnglishAssessment)window.EnglishAssessment.handleClick(e)});
+content.addEventListener("click",e=>{if(window.MYPScience)window.MYPScience.handleClick(e)});
 content.addEventListener("input",handleFrenchStudyInput);
 nav.addEventListener("click",e=>{const link=e.target.closest(".nav-link[data-page]");if(link&&nav.contains(link))setPage(link.dataset.page)});content.addEventListener("click",e=>{const link=e.target.closest("[data-page]");if(link&&content.contains(link))setPage(link.dataset.page)});
 document.getElementById("mobileMenu").addEventListener("click",()=>sidebar.classList.toggle("open"));document.getElementById("profileButton").addEventListener("click",()=>openPanel("My workspace"));document.getElementById("settingsButton").addEventListener("click",()=>openPanel("Settings"));document.getElementById("closePanel").addEventListener("click",closePanel);overlay.addEventListener("click",closePanel);document.addEventListener("keydown",e=>{if(e.key==="Escape"){closePanel();sidebar.classList.remove("open")}});
