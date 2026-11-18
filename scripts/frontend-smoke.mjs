@@ -74,7 +74,7 @@ try {
       for (const [discipline,label] of [["history","History"],["geography","Geography"],["integrated","Integrated Humanities"]]) {
         await page.locator('[data-is-discipline="' + discipline + '"]').click();
         if (!(await page.locator(".is-pathway-description").textContent()).length) throw new Error(label+" pathway should explain its subject focus.");
-        await page.locator('[data-is-tab="full"]').click();
+        await page.locator('.is-tab[data-is-tab="full"]').click();
         const options = await page.locator("#is-topic option").allTextContents();
         if (!options.length) throw new Error(label+" should provide its own topic list.");
         await page.locator('[data-is-generate="full"]').click();
@@ -91,7 +91,7 @@ try {
         await page.locator(".is-paper-head").waitFor();
         if (await page.locator(".is-task").count() !== 1) throw new Error("Criterion "+criterion+" should generate one 25-mark task.");
       }
-      await page.locator('[data-is-tab="full"]').click();
+      await page.locator('.is-tab[data-is-tab="full"]').click();
       await page.locator('[data-is-generate="full"]').click();
       await page.locator(".is-paper-head").waitFor();
       if (await page.locator(".is-task").count() !== 4) throw new Error("The full I&S paper should contain all four criteria.");
