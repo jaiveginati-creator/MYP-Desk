@@ -58,6 +58,26 @@ try{
    assert.ok(generated.tasks.every(t=>t.questions.every(item=>item.markscheme.length>=2)));
   }
  }
+ // Verify harmless AI label variations are canonicalized rather than rejected.
+ globalThis.fetch=async(_url,options)=>{
+  const request=JSON.parse(options.body),generated=paper(request.mode);
+  if(request.mode==="full"){
+   generated.tasks[0].taskId="Task A";
+   generated.tasks[1].taskId="Task B";
+   generated.tasks[2].taskId="Task C";
+  }else if(request.mode==="criterion-A"){
+   generated.tasks[0].taskId="";
+   generated.tasks[0].taskName="Criterion A practice";
+  }
+  return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(generated)}}]})};
+ };
+ for(const mode of ["full","criterion-A"]){
+  const result=response();
+  await handler({method:"POST",body:{action:"is_eassessment",mode,topic:"Changing communities",level:"MYP 4–5",discipline:"integrated"}},result);
+  assert.equal(result.state.status,200,"equivalent labels should be accepted: "+JSON.stringify(result.state.payload));
+  if(mode==="full")assert.deepEqual(result.state.payload.paper.tasks.map(t=>t.taskId),["investigating","communicating","thinking"]);
+  else assert.equal(result.state.payload.paper.tasks[0].taskId,"criterion-A");
+ }
  console.log("PASS: all three I&S pathways validate full 80-mark papers, 26/18/36 task marks, A/B/C/D criterion totals, three individual task generators and four 20-mark criterion drills.");
 }finally{
  globalThis.fetch=originalFetch;
